@@ -132,7 +132,7 @@ export default function PasswordDigits() {
       </div>
 
       {/* Section du formulaire */}
-      <div className="asideForm  bg-white dark:bg-gray-900 flex flex-col justify-evenly items-center m-auto w-full  ">
+      <div className="asideForm  bg-white dark:bg-gray-900 flex flex-col justify-evenly items-center m-auto   ">
         <div className="  flex flex-col justify-evenly items-center m-auto w-full max-w-[500px]  dark:text-white py-6">
           <AppLogo logoSrc="/assets/logo.png" logoAlt="Logo" />
           <div className="formContent w-full">

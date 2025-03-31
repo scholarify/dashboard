@@ -4,6 +4,7 @@
 @plugin "daisyui";
 
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;700&display=swap');
+@import '../styles/formStyle.css';
 
 :root {
   --background: #F5F6FA;

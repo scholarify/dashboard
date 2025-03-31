@@ -61,7 +61,7 @@ export default function Login() {
                     <img src="/assets/images/asideImage.png" className="h-full w-full rounded-[25px]" alt="Aside Image" />
                 </div>
             </div>
-            <div className="asideForm  bg-white dark:bg-gray-900 flex flex-col justify-evenly items-center m-auto w-full  ">
+            <div className="asideForm  bg-white dark:bg-gray-900 flex flex-col justify-evenly items-center m-auto  ">
                 <div className=" flex flex-col justify-evenly items-center m-auto w-full max-w-[500px]  dark:text-white py-6">
                     <AppLogo logoSrc="/assets/logo.png" logoAlt="Logo" />
                     <div className="w-full mx-auto p-6" >
