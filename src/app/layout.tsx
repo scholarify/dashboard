@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Bricolage_Grotesque } from "next/font/google";
+import ThemeInitializer from "@/utils/ThemeInitializer";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -17,6 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={bricolage.className}>
+        <ThemeInitializer/>
         {children}
       </body>
     </html>

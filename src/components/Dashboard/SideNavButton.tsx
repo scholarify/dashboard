@@ -1,9 +1,28 @@
-const SidebarButton = ({ icon: Icon, name }: { icon: any; name: string }) => {
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+interface SidebarButtonProps {
+  icon: any;
+  name: string;
+  href: string;
+}
+
+const SidebarButton = ({ icon: Icon, name, href }: SidebarButtonProps) => {
+  const pathname = usePathname();
+  const isActive = pathname === href;
+
   return (
-    <button className="flex items-center w-full px-4 py-2 text-gray-700 hover:color rounded-lg transition-all">
+    <Link
+      href={href}
+      className={`text-sm flex items-center w-full px-4 py-2 rounded-lg transition-all 
+                 text-foreground hover:text-background hover:bg-foreground hover:shadow-lg
+                 ${isActive ? "bg-foreground text-background shadow-lg" : ""}`}
+    >
       <Icon className="w-5 h-5 mr-2" />
       <span>{name}</span>
-    </button>
+    </Link>
   );
 };
 
