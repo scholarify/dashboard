@@ -1,17 +1,23 @@
 "use client";
 import React from "react";
 import SearchBox from "../widgets/SearchBox";
-import { Bell, Settings } from "lucide-react";
+import { Bell, Settings, Home } from "lucide-react";
 import DarkModeToggle from "../widgets/DarkMode";
 import AvatarImage from "../widgets/AvatarImage";
+import Breadcrumbs from './BreadCrums'
 
-export default function NavigationBar() {
+interface NavigationBarProps {
+  icon: any;
+  baseHref: string;
+  title: string;
+}
+export default function NavigationBar({ icon: Icon, baseHref, title }: NavigationBarProps) {
   return (
     <div className="w-full flex items-center justify-between">
-      {/* Left: Breadcrumbs & Page Title */}
-      <div className="flex flex-col">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Breadcrumbs</p>
-        <p className="text-lg font-semibold text-foreground">Dashboard</p>
+      
+      <div className="flex flex-col gap-2">
+        <Breadcrumbs baseHref={baseHref} icon={Icon} />
+        <p className="text-2xl font-semibold text-foreground">{title}</p>
       </div>
 
       {/* Right: Actions (Search, Notifications, Dark Mode, Settings, Profile) */}

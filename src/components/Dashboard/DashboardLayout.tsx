@@ -23,8 +23,8 @@ export default function DashboardLayout() {
                 </div> 
 
                 <SearchBox/>
-                <div>
-                    <SidebarButton icon={LayoutDashboard} name="Dashboard" href='/'/>
+                <div className='flex flex-col gap-1'>
+                    <SidebarButton icon={LayoutDashboard} name="Dashboard" href='/dashboard'/>
                     <SidebarButton icon={School} name="Schools" href='/' />
                     <SidebarButton icon={Users} name="Users" href='/'/>
                     <SidebarButton icon={Wallet} name="Subscription" href='/'/>
@@ -48,7 +48,7 @@ export default function DashboardLayout() {
         </div>
 
         <div className='px-6 py-2 w-full'>
-            <NavigationBar/>
+            <NavigationBar icon={LayoutDashboard} baseHref ='/dashboard' title='Dashboard'/>
             <div>Content</div>
         </div>
     </div>
