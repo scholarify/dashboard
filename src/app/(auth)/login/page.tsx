@@ -49,7 +49,7 @@ export default function Login() {
         } finally {
             setIsLoading(false);
             setPassword('');
-            // window.location.href = '/dashboards/super-admin';
+            window.location.href = '/super-admin/schools';
         }
     };
 
