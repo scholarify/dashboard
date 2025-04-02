@@ -9,20 +9,20 @@
   --background: #F5F6FA;
   --foreground: #1E3D59;
   --stroke : #2D3436;
-  --teal: #17B890;
+  --teal: #17B890; /* teal do not modify this color*/
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #1E3D59;
-    --foreground: #F5F6FA;
-    --stroke : #F5F6FA;
+    --background: #f3f4f6 ;
+    --foreground: #1E3D59;
+    --stroke : #1E3D59;
   } 
 }
 html.dark {
-  --background: #1E3D59;
-  --foreground: #F5F6FA;
-  --stroke: #F5F6FA;
+  --background: #111827;
+  --foreground: #f3f4f6;
+  --stroke: #1E3D59;
 }
 
 body {
