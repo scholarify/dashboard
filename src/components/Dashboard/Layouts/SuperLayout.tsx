@@ -62,7 +62,7 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
 
       {/* Sidebar */}
       <div
-        className={`flex w-[290px] flex-col h-full border border-stroke p-2 rounded-lg fixed inset-y-0 left-0 z-40 bg-background transition-transform md:relative md:translate-x-0 ${
+        className={`flex w-[290px] flex-col h-full border border-stroke shadow-md shadow-foreground p-2 rounded-lg fixed inset-y-0 left-0 z-40 bg-background transition-transform md:relative md:translate-x-0 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
