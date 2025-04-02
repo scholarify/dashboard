@@ -22,7 +22,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
   const adjustedSegments = pathSegments.slice(1);
 
   return (
-    <nav className={`flex items-center text-sm text-gray-600 dark:text-gray-300 ${className} p-2 border border-gray-300 rounded-md`}>
+    <nav className={`hidden md:flex items-center text-sm text-gray-600 dark:text-gray-300 ${className} p-2 border border-gray-300 rounded-md`}>
       {/* Base Link */}
       <Link href={baseHref} className="flex items-center gap-1 text-foreground transition">
         {Icon && <Icon className="w-4 h-4" />}

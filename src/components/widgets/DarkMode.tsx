@@ -33,7 +33,7 @@ const DarkModeToggle = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="text-gray-600 dark:text-gray-300 transition-all"
+      className="hidden md:flex text-gray-600 dark:text-gray-300 transition-all"
     >
       {isDarkMode ? <Sun/> : <Moon />}
     </button>

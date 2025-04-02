@@ -2,7 +2,7 @@ import { Search } from "lucide-react";
 
 const SearchBox = () => {
   return (
-    <div className="relative w-full max-w-md">
+    <div className="hidden md:flex relative w-full max-w-md">
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
       <input
         type="text"
