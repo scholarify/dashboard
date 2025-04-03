@@ -9,6 +9,7 @@ import Logo from "../../widgets/Logo";
 import GoPro from "../GoPro";
 import NavigationBar from "../NavigationBar";
 import { Menu, X } from "lucide-react";
+import Breadcrumbs from "../BreadCrums";
 
 interface DashboardLayoutProps {
   navigation: {
@@ -50,20 +51,14 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
     href: `${BASE_URL}/settings` 
     };
 
+
   return (
     <div className="flex h-screen p-4">
-      {/* Mobile Sidebar Toggle */}
-      <button
-        className="md:hidden p-2 bg-foreground text-background rounded-lg fixed top-4 left-4 z-50"
-        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-      >
-        {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
-
+      
       {/* Sidebar */}
       <div
-        className={`flex w-[290px] flex-col h-full border border-stroke shadow-md shadow-foreground p-2 rounded-lg fixed inset-y-0 left-0 z-40 bg-background transition-transform md:relative md:translate-x-0 ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        className={`flex w-[290px] flex-col h-full border border-stroke shadow-md shadow-foreground p-2 rounded-lg fixed inset-y-0 left-0 z-40 bg-background transition-transform lg:relative lg:translate-x-0 ${
+          isSidebarOpen ? "translate-x-0 " : "-translate-x-full"
         }`}
       >
         <div className="flex flex-col gap-3 overflow-auto">
@@ -102,14 +97,26 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
           />
         </div>
       </div>
-
+      {/* overlay */}
+      <div
+        className={`lg:hidden fixed inset-0 bg-black  z-30 transition-opacity duration-300 ease-in-out ${
+          isSidebarOpen ? "opacity-50" : "opacity-0 pointer-events-none z-0"
+        }`}
+        onClick={() => setIsSidebarOpen(false)}
+      ></div>
       {/* Main Content */}
-      <div className="px-6 py-2 w-full">
+      <div className="px-6 py-2 w-full flex flex-col gap-4 ">
         <NavigationBar
           icon={navigation.icon}
           baseHref={navigation.baseHref}
           title={navigation.title}
+          isSidebarOpen={isSidebarOpen}
+          toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         />
+        <div className="flex lg:hidden flex-col gap-2">
+          <Breadcrumbs baseHref={navigation.baseHref} icon={navigation.icon} />
+          <p className="text-2xl font-semibold text-foreground">{navigation.title}</p>
+        </div>
         <div>{children}</div>
       </div>
     </div>
