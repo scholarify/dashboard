@@ -93,7 +93,7 @@ export default function Page() {
           columns={columns}
           data={schools}
           actions={actions}
-          itemsPerPage={5} // Correspond à l'image (5 éléments par page)
+          defaultItemsPerPage={5} // Correspond à l'image (5 éléments par page)
           onSelectionChange={setSelectedSchools} // Passer la sélection au parent
         />
       </div>
