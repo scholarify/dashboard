@@ -9,7 +9,7 @@ const BASE_URL = "/super-admin";
 
 const navigation = {
   icon: School,
-  baseHref: `${BASE_URL}/school`,
+  baseHref: `${BASE_URL}/schools`,
   title: "Schools"
 };
 

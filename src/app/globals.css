@@ -17,13 +17,13 @@
   :root {
     --background: #f3f4f6 ;
     --foreground: #1E3D59;
-    --stroke : #1E3D59;
+    --stroke : #636E72;
   } 
 }
 html.dark {
   --background: #111827;
   --foreground: #f3f4f6;
-  --stroke: #1E3D59;
+  --stroke: #f3f4f6;
 }
 
 body {

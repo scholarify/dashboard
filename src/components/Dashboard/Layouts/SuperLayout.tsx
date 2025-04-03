@@ -117,7 +117,7 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
           <Breadcrumbs baseHref={navigation.baseHref} icon={navigation.icon} />
           <p className="text-2xl font-semibold text-foreground">{navigation.title}</p>
         </div>
-        <div>{children}</div>
+        <div className="overflow-auto">{children}</div>
       </div>
     </div>
   );
