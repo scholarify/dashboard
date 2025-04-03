@@ -53,7 +53,7 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
 
 
   return (
-    <div className="flex h-screen p-4">
+    <div className="flex h-screen sm:p-4">
       
       {/* Sidebar */}
       <div
@@ -105,7 +105,7 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
         onClick={() => setIsSidebarOpen(false)}
       ></div>
       {/* Main Content */}
-      <div className="px-6 py-2 w-full flex flex-col gap-4 ">
+      <div className="sm:px-6 px-2 py-2 w-full flex flex-col gap-4 ">
         <NavigationBar
           icon={navigation.icon}
           baseHref={navigation.baseHref}

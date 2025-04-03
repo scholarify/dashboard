@@ -88,7 +88,7 @@ export default function Page() {
       showGoPro={true}
       onLogout={() => console.log("Logged out")}
     >
-      <div className="p-6">
+      <div className="md:p-6">
         <DataTable
           columns={columns}
           data={schools}
