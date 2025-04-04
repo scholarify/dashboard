@@ -2,11 +2,12 @@
 
 import { School } from "lucide-react";
 import SuperLayout from "@/components/Dashboard/Layouts/SuperLayout";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import DataTable from "@/components/utils/DataTable";
 import { useRouter } from "next/navigation";
 import CreateSchoolModal from "./components/CreateSchoolModal";
 import DeleteSchoolModal from "./components/DeleteSchoolModal";
+import CircularLoader from "@/components/widgets/CircularLoader";
 
 const BASE_URL = "/super-admin";
 
@@ -65,7 +66,7 @@ const initialSchools: School[] = [
   { id: "SCH011", name: "IminLove Sketch School", email: "contact@loremipsum.com", principal: "Michael Jackson", creationDate: "03/12/1989" },
 ];
 
-export default function Page() {
+function SchoolContent() {
   const router = useRouter();
   const [schools, setSchools] = useState(initialSchools);
   const [selectedSchools, setSelectedSchools] = useState<School[]>([]);
@@ -99,13 +100,13 @@ export default function Page() {
   // Actions
   const actions = [
     {
-      label: "View Details",
+      label: "View",
       onClick: (school: School) => {
         router.push(`${BASE_URL}/schools/view?id=${school.id}`);
       },
     },
     {
-      label: "Delete School",
+      label: "Delete",
       onClick: (school: School) => {
         setSchoolToDelete(school); // Stocker l'école à supprimer
         setIsDeleteModalOpen(true); // Ouvrir le modal de suppression
@@ -143,47 +144,61 @@ export default function Page() {
   };
 
   return (
-    <SuperLayout
-      navigation={navigation}
-      showGoPro={true}
-      onLogout={() => console.log("Logged out")}
-    >
-      <div className="md:p-6">
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="mb-4 px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600"
-        >
-          Add New School
-        </button>
+    <div className="md:p-6">
+      <button
+        onClick={() => setIsModalOpen(true)}
+        className="mb-4 px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600"
+      >
+        Add New School
+      </button>
 
-        <DataTable
-          columns={columns}
-          data={schools}
-          actions={actions}
-          defaultItemsPerPage={5}
-          onSelectionChange={setSelectedSchools}
+      <DataTable
+        columns={columns}
+        data={schools}
+        actions={actions}
+        defaultItemsPerPage={5}
+        onSelectionChange={setSelectedSchools}
+      />
+
+      {/* Modal pour ajouter une école */}
+      {isModalOpen && (
+        <CreateSchoolModal
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSave}
         />
+      )}
 
-        {/* Modal pour ajouter une école */}
-        {isModalOpen && (
-          <CreateSchoolModal
-            onClose={() => setIsModalOpen(false)}
-            onSave={handleSave}
-          />
-        )}
-
-        {/* Modal pour supprimer une école */}
-        {isDeleteModalOpen && schoolToDelete && (
-          <DeleteSchoolModal
-            schoolName={schoolToDelete.name}
-            onClose={() => {
-              setIsDeleteModalOpen(false);
-              setSchoolToDelete(null);
-            }}
-            onDelete={handleDelete}
-          />
-        )}
-      </div>
-    </SuperLayout>
+      {/* Modal pour supprimer une école */}
+      {isDeleteModalOpen && schoolToDelete && (
+        <DeleteSchoolModal
+          schoolName={schoolToDelete.name}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setSchoolToDelete(null);
+          }}
+          onDelete={handleDelete}
+        />
+      )}
+    </div>
   );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={
+      <div>
+        <div className="flex justify-center items-center h-screen absolute top-0 left-0 z-50">
+          <CircularLoader size={32} color="teal" />
+        </div>
+      </div>
+    }>
+      <SuperLayout
+        navigation={navigation}
+        showGoPro={true}
+        onLogout={() => console.log("Logged out")}
+      >
+        <SchoolContent />
+      </SuperLayout>
+    </Suspense>
+  )
 }

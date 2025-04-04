@@ -6,6 +6,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import CreateSchoolModal from "../components/CreateSchoolModal";
 import DeleteSchoolModal from "../components/DeleteSchoolModal";
+import CircularLoader from "@/components/widgets/CircularLoader";
 
 // Interface pour les données des écoles
 interface School {
@@ -134,7 +135,9 @@ function SchoolViewDetailContent() {
     };
 
     if (!school) {
-        return <div>Loading...</div>;
+        return <div className="flex justify-center items-center h-screen w-full absolute top-0 left-0 z-50">
+            <CircularLoader size={32} color="teal" />
+        </div>;
     }
 
     return (
@@ -286,14 +289,20 @@ function SchoolViewDetailContent() {
     );
 }
 
-export default function SchoolViewDetail(){
+export default function SchoolViewDetail() {
     return (
         <SuperLayout
             navigation={navigation}
             showGoPro={true}
             onLogout={() => console.log("Logged out")}
         >
-            <Suspense fallback={<div>Loading...</div>}>
+            <Suspense fallback={
+                <div>
+                    <div className="flex justify-center items-center h-screen absolute top-0 left-0 z-50">
+                        <CircularLoader size={32} color="teal" />
+                    </div>
+                </div>}
+            >
                 <SchoolViewDetailContent />
             </Suspense>
         </SuperLayout>

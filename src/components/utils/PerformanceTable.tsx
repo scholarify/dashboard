@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import CircularLoader from "../widgets/CircularLoader";
 
 // Interface pour les données de performance
 interface PerformanceData {
@@ -24,6 +25,7 @@ const PerformanceTable = ({
     defaultItemsPerPage = 5,
     metricOptions,
 }: PerformanceTableProps) => {
+    const [isLoading, setIsLoading] = useState(false); // État pour le chargement
     // État pour la pagination
     const [currentPage, setCurrentPage] = useState(1);
     // État pour le nombre d'éléments par page
@@ -79,7 +81,11 @@ const PerformanceTable = ({
     // Gérer la recherche
     const handleSearch = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === "Enter") {
-            setCurrentPage(1); // Réinitialiser à la première page lors d'une nouvelle recherche
+            setCurrentPage(1);
+            setIsLoading(true); // Afficher le loader pendant la recherche
+            setTimeout(() => {
+                setIsLoading(false); // Masquer le loader après la recherche
+            }, 1000);
         }
     };
 
@@ -107,11 +113,22 @@ const PerformanceTable = ({
             <div className="w-full rounded-lg border border-gray-200 dark:border-gray-700  shadow-sm flex flex-col">
                 <div className="p-4 flex items-center justify-between">
                     <div className="relative w-full max-w-xs">
+                        {isLoading && (
+                            <div className="absolute left-1 top-1/2 transform -translate-y-1/2">
+                                <CircularLoader size={8} color="teal" />
+                            </div>
+                        )}
                         <input
                             type="text"
                             placeholder="Search..."
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => {
+                                setIsLoading(true);
+                                setSearchTerm(e.target.value);
+                                setTimeout(() => {
+                                    setIsLoading(false);
+                                }, 1000);
+                            }}
                             onKeyDown={handleSearch}
                             className="w-full  px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-600 dark:text-foreground dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-teal"
                         />
@@ -252,8 +269,8 @@ const PerformanceTable = ({
                                             key={page}
                                             onClick={() => setCurrentPage(page)}
                                             className={`px-3 w-[40px] h-[40px] py-1 rounded-full text-sm hidden sm:block ${currentPage === page
-                                                    ? "focus:outline-none ring-2 ring-teal text-teal"
-                                                    : "text-foreground hover:ring-2 hover:ring-teal hover:text-teal"
+                                                ? "focus:outline-none ring-2 ring-teal text-teal"
+                                                : "text-foreground hover:ring-2 hover:ring-teal hover:text-teal"
                                                 }`}
                                         >
                                             {page}
