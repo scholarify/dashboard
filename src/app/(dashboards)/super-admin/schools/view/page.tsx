@@ -56,7 +56,7 @@ const navigation = {
     title: "School Details",
 };
 
-export default function SchoolViewDetail() {
+function SchoolViewDetailContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const schoolId = searchParams.get("id");
@@ -138,155 +138,163 @@ export default function SchoolViewDetail() {
     }
 
     return (
+        <div>
+            <div className="md:p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                    {/* Titre */}
+                    <h1 className="text-2xl font-bold text-foreground mb-4">
+                        {school.name} Details
+                    </h1>
+
+                    {/* Section School Information */}
+                    <div className="mb-6">
+                        <h2 className="text-lg font-semibold text-foreground mb-2">
+                            School Information
+                        </h2>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                            {school.description || "No description available."}
+                        </p>
+                    </div>
+
+                    {/* Grille des informations */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                        {/* School ID */}
+                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                            <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                                School ID
+                            </p>
+                            <p className="text-sm text-foreground">{school.id}</p>
+                        </div>
+
+                        {/* Principal */}
+                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                            <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                                Principal
+                            </p>
+                            <p className="text-sm text-foreground">{school.principal}</p>
+                        </div>
+
+                        {/* School Name */}
+                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                            <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                                School Name
+                            </p>
+                            <p className="text-sm text-foreground">{school.name}</p>
+                        </div>
+
+                        {/* Creation Date */}
+                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                            <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                                Creation Date
+                            </p>
+                            <p className="text-sm text-foreground">{school.creationDate}</p>
+                        </div>
+
+                        {/* Email */}
+                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                            <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                                Email
+                            </p>
+                            <p className="text-sm text-foreground">{school.email}</p>
+                        </div>
+
+                        {/* Website */}
+                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                            <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                                Website
+                            </p>
+                            <p className="text-sm text-foreground">
+                                {school.website ? (
+                                    <a
+                                        href={school.website}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-teal-500 hover:underline"
+                                    >
+                                        {school.website}
+                                    </a>
+                                ) : (
+                                    "N/A"
+                                )}
+                            </p>
+                        </div>
+
+                        {/* Address */}
+                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                            <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                                Address
+                            </p>
+                            <p className="text-sm text-foreground">{school.address || "N/A"}</p>
+                        </div>
+
+                        {/* Phone Number */}
+                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                            <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                                Phone Number
+                            </p>
+                            <p className="text-sm text-foreground">{school.phoneNumber || "N/A"}</p>
+                        </div>
+                    </div>
+
+                    {/* Boutons */}
+                    <div className="flex justify-end space-x-2">
+                        <button
+                            onClick={() => setIsEditModalOpen(true)}
+                            className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600"
+                        >
+                            Edit School
+                        </button>
+                        <button
+                            onClick={() => setIsDeleteModalOpen(true)} // Ouvre le modal de suppression
+                            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                        >
+                            Delete School
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Modal pour l'édition */}
+            {isEditModalOpen && (
+                <CreateSchoolModal
+                    onClose={() => setIsEditModalOpen(false)}
+                    onSave={handleSave}
+                    initialData={
+                        {
+                            schoolName: school.name,
+                            email: school.email,
+                            address: school.address || "",
+                            website: school.website || "",
+                            principalName: school.principal,
+                            creationDate: school.creationDate,
+                            phoneNumber: school.phoneNumber || "",
+                            description: school.description || "",
+                        }
+                    }
+                />
+            )}
+
+            {/* Modal pour la suppression */}
+            {isDeleteModalOpen && (
+                <DeleteSchoolModal
+                    schoolName={school.name}
+                    onClose={() => setIsDeleteModalOpen(false)}
+                    onDelete={handleDelete}
+                />
+            )}
+        </div>
+    );
+}
+
+export default function SchoolViewDetail(){
+    return (
         <SuperLayout
             navigation={navigation}
             showGoPro={true}
             onLogout={() => console.log("Logged out")}
         >
             <Suspense fallback={<div>Loading...</div>}>
-                <div className="md:p-6">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                        {/* Titre */}
-                        <h1 className="text-2xl font-bold text-foreground mb-4">
-                            {school.name} Details
-                        </h1>
-
-                        {/* Section School Information */}
-                        <div className="mb-6">
-                            <h2 className="text-lg font-semibold text-foreground mb-2">
-                                School Information
-                            </h2>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">
-                                {school.description || "No description available."}
-                            </p>
-                        </div>
-
-                        {/* Grille des informations */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                            {/* School ID */}
-                            <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
-                                <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-                                    School ID
-                                </p>
-                                <p className="text-sm text-foreground">{school.id}</p>
-                            </div>
-
-                            {/* Principal */}
-                            <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
-                                <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-                                    Principal
-                                </p>
-                                <p className="text-sm text-foreground">{school.principal}</p>
-                            </div>
-
-                            {/* School Name */}
-                            <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
-                                <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-                                    School Name
-                                </p>
-                                <p className="text-sm text-foreground">{school.name}</p>
-                            </div>
-
-                            {/* Creation Date */}
-                            <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
-                                <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-                                    Creation Date
-                                </p>
-                                <p className="text-sm text-foreground">{school.creationDate}</p>
-                            </div>
-
-                            {/* Email */}
-                            <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
-                                <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-                                    Email
-                                </p>
-                                <p className="text-sm text-foreground">{school.email}</p>
-                            </div>
-
-                            {/* Website */}
-                            <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
-                                <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-                                    Website
-                                </p>
-                                <p className="text-sm text-foreground">
-                                    {school.website ? (
-                                        <a
-                                            href={school.website}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-teal-500 hover:underline"
-                                        >
-                                            {school.website}
-                                        </a>
-                                    ) : (
-                                        "N/A"
-                                    )}
-                                </p>
-                            </div>
-
-                            {/* Address */}
-                            <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
-                                <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-                                    Address
-                                </p>
-                                <p className="text-sm text-foreground">{school.address || "N/A"}</p>
-                            </div>
-
-                            {/* Phone Number */}
-                            <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
-                                <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-                                    Phone Number
-                                </p>
-                                <p className="text-sm text-foreground">{school.phoneNumber || "N/A"}</p>
-                            </div>
-                        </div>
-
-                        {/* Boutons */}
-                        <div className="flex justify-end space-x-2">
-                            <button
-                                onClick={() => setIsEditModalOpen(true)}
-                                className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600"
-                            >
-                                Edit School
-                            </button>
-                            <button
-                                onClick={() => setIsDeleteModalOpen(true)} // Ouvre le modal de suppression
-                                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-                            >
-                                Delete School
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Modal pour l'édition */}
-                {isEditModalOpen && (
-                    <CreateSchoolModal
-                        onClose={() => setIsEditModalOpen(false)}
-                        onSave={handleSave}
-                        initialData={
-                            {
-                                schoolName: school.name,
-                                email: school.email,
-                                address: school.address || "",
-                                website: school.website || "",
-                                principalName: school.principal,
-                                creationDate: school.creationDate,
-                                phoneNumber: school.phoneNumber || "",
-                                description: school.description || "",
-                            }
-                        }
-                    />
-                )}
-
-                {/* Modal pour la suppression */}
-                {isDeleteModalOpen && (
-                    <DeleteSchoolModal
-                        schoolName={school.name}
-                        onClose={() => setIsDeleteModalOpen(false)}
-                        onDelete={handleDelete}
-                    />
-                )}
+                <SchoolViewDetailContent />
             </Suspense>
         </SuperLayout>
     );
