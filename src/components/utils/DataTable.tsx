@@ -20,6 +20,7 @@ interface DataTableProps<T> {
   columns: Column<T>[];
   data: T[];
   actions?: Action<T>[];
+  hasSearch?: boolean;
   defaultItemsPerPage?: number;
   onSelectionChange?: (selectedRows: T[]) => void;
 }
@@ -28,6 +29,7 @@ const DataTable = <T extends { id: string }>({
   columns,
   data,
   actions = [],
+  hasSearch = true,
   defaultItemsPerPage = 5,
   onSelectionChange,
 }: DataTableProps<T>) => {
@@ -194,26 +196,30 @@ const DataTable = <T extends { id: string }>({
       <div className="w-full rounded-lg border border-gray-200 dark:border-gray-700  shadow-sm flex flex-col">
 
         {/* Zone de recherche */}
-        <div className="p-4">
-          <div className="relative w-full max-w-md">
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={handleSearch}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-600 dark:text-foreground dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-teal"
-            />
-            {searchTerm && (
-              <button
-                onClick={clearSearchFilter}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <X size={16} />
-              </button>
-            )}
+        {hasSearch && (
+          <div className="p-4">
+            <div className="relative w-full max-w-md">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={handleSearch}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-600 dark:text-foreground dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-teal"
+              />
+              {searchTerm && (
+                <button
+                  onClick={clearSearchFilter}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        )
+        }
+
 
         {/* Filtres actifs */}
         {searchTerm && (
@@ -279,11 +285,10 @@ const DataTable = <T extends { id: string }>({
                   currentData.map((row, rowIndex) => (
                     <tr
                       key={rowIndex}
-                      className={`border-t border-gray-200 transition-colors duration-200 w-max ${
-                        selectedRows.includes(row)
+                      className={`border-t border-gray-200 transition-colors duration-200 w-max ${selectedRows.includes(row)
                           ? "bg-gray-50 dark:bg-gray-700 border-l-4 border-l-teal"
                           : "hover:bg-gray-50 dark:hover:bg-gray-700"
-                      }`}
+                        }`}
                     >
                       {/* Case à cocher pour chaque ligne */}
                       <td className="px-4 py-3 w-12">
@@ -372,11 +377,10 @@ const DataTable = <T extends { id: string }>({
                 <button
                   onClick={goToPreviousPage}
                   disabled={currentPage === 1}
-                  className={`p-2 text-foreground hover:text-teal disabled:text-gray-500 ${
-                    currentPage === 1 ? "cursor-not-allowed" : "max-sm:border max-sm:border-teal max-sm:rounded-lg"
-                  }`}
+                  className={`p-2 text-foreground hover:text-teal disabled:text-gray-500 ${currentPage === 1 ? "cursor-not-allowed" : "max-sm:border max-sm:border-teal max-sm:rounded-lg"
+                    }`}
                 >
-                  <ChevronLeft size={20} className="hidden sm:block"/>
+                  <ChevronLeft size={20} className="hidden sm:block" />
                   <span className="sm:hidden ">Previous</span>
                 </button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(
@@ -384,11 +388,10 @@ const DataTable = <T extends { id: string }>({
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`px-3 w-[40px] h-[40px] py-1 rounded-full text-sm hidden sm:block ${
-                        currentPage === page
+                      className={`px-3 w-[40px] h-[40px] py-1 rounded-full text-sm hidden sm:block ${currentPage === page
                           ? "focus:outline-none ring-2 ring-teal text-teal"
                           : "text-foreground hover:ring-2 hover:ring-teal hover:text-teal"
-                      }`}
+                        }`}
                     >
                       {page}
                     </button>
@@ -397,11 +400,10 @@ const DataTable = <T extends { id: string }>({
                 <button
                   onClick={goToNextPage}
                   disabled={currentPage === totalPages}
-                  className={`p-2 text-foreground hover:text-teal disabled:text-gray-500 ${
-                    currentPage === totalPages ? "cursor-not-allowed" : "max-sm:border max-sm:border-teal max-sm:rounded-lg"
-                  }`}
+                  className={`p-2 text-foreground hover:text-teal disabled:text-gray-500 ${currentPage === totalPages ? "cursor-not-allowed" : "max-sm:border max-sm:border-teal max-sm:rounded-lg"
+                    }`}
                 >
-                  <ChevronRight size={20} className="hidden sm:block"/>
+                  <ChevronRight size={20} className="hidden sm:block" />
                   <span className="sm:hidden ">Next</span>
                 </button>
               </div>

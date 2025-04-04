@@ -106,18 +106,20 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
       ></div>
       {/* Main Content */}
       <div className="sm:px-6 px-2 py-2 w-full flex flex-col gap-4 ">
-        <NavigationBar
-          icon={navigation.icon}
-          baseHref={navigation.baseHref}
-          title={navigation.title}
-          isSidebarOpen={isSidebarOpen}
-          toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-        />
+        <div className="sticky top-0 z-20 flex items-center justify-between   ">
+          <NavigationBar
+            icon={navigation.icon}
+            baseHref={navigation.baseHref}
+            title={navigation.title}
+            isSidebarOpen={isSidebarOpen}
+            toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          />
+        </div>
         <div className="flex lg:hidden flex-col gap-2">
           <Breadcrumbs baseHref={navigation.baseHref} icon={navigation.icon} />
           <p className="text-2xl font-semibold text-foreground">{navigation.title}</p>
         </div>
-        <div className="overflow-auto">{children}</div>
+        <div className="">{children}</div>
       </div>
     </div>
   );
