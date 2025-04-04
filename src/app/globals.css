@@ -11,6 +11,7 @@
   --foreground: #1E3D59;
   --stroke : #2D3436;
   --teal: #17B890; /* teal do not modify this color*/
+  --tealdarker: #0E9B6D; /* teal-600 do not modify this color*/
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,7 +32,9 @@ body {
   background: var(--background);
   font-family: 'Bricolage Grotesque', sans-serif;
 }
-
+.bg-tealdarker {
+  background-color: var(--tealdarker);
+}
 
 @layer utilities {
   .text-balance {
