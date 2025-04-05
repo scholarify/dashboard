@@ -141,7 +141,7 @@ const PerformanceTable = ({
                             </button>
                         )}
                     </div>
-                    <div className="flex flex-col items-center space-x-2 w-full max-w-xs">
+                    <div className="flex flex-col  text-right space-x-2 w-full max-w-xs">
                         <label htmlFor="metricSelect" className="text-sm text-gray-600 dark:text-gray-400">
                             Select Performance Metric
                         </label>
