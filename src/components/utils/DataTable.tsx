@@ -23,15 +23,19 @@ interface DataTableProps<T> {
   actions?: Action<T>[];
   hasSearch?: boolean;
   defaultItemsPerPage?: number;
+  loading?: boolean;
+  onLoadingChange?: (loading: boolean) => void;
   onSelectionChange?: (selectedRows: T[]) => void;
 }
 
-const DataTable = <T extends { id: string }>({
+const DataTable = <T extends Record<string, unknown>>({
   columns,
   data,
   actions = [],
   hasSearch = true,
   defaultItemsPerPage = 5,
+  loading = false,
+  onLoadingChange = () => {},
   onSelectionChange,
 }: DataTableProps<T>) => {
   const [isLoading, setIsLoading] = useState(false); // État pour le chargement
@@ -291,55 +295,63 @@ const DataTable = <T extends { id: string }>({
                 </tr>
               </thead>
               <tbody>
-                {currentData.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={columns.length + (actions.length > 0 ? 1 : 0) + 1}
-                      className="px-4 py-3 text-center text-gray-500"
-                    >
-                      No data available
-                    </td>
-                  </tr>
-                ) : (
-                  currentData.map((row, rowIndex) => (
-                    <tr
-                      key={rowIndex}
-                      className={`border-t border-gray-200 transition-colors duration-200 w-max ${
-                        selectedRows.includes(row)
-                          ? "bg-gray-50 dark:bg-gray-700 border-l-4 border-l-teal"
-                          : "hover:bg-gray-50 dark:hover:bg-gray-700"
-                      }`}
-                    >
-                      {/* Case à cocher pour chaque ligne */}
-                      <td className="px-4 py-3 w-12">
-                        <input
-                          type="checkbox"
-                          checked={selectedRows.includes(row)}
-                          onChange={() => handleRowSelection(row)}
-                          className="h-4 w-4 text-teal border-gray-300 rounded cursor-pointer"
-                        />
+                {
+                  loading ? (
+                    <tr>
+                      <td colSpan={columns.length + (actions.length > 0 ? 1 : 0) + 1} className="px-4 py-3 text-center">
+                        <CircularLoader size={24} color="teal" />
                       </td>
-                      {columns.map((column, colIndex) => (
-                        <td key={colIndex} className="px-4 py-3 text-sm text-foreground">
-                          {typeof column.accessor === "function"
-                            ? column.accessor(row)
-                            : row[column.accessor] as React.ReactNode}
-                        </td>
-                      ))}
-                      {actions.length > 0 && (
-                        <td className="px-4 py-3 text-right w-32">
-                          <div className="flex justify-end space-x-2">
-                            {actions.map((action, actionIndex) => (
-                              <React.Fragment key={actionIndex}>
-                                {getActionIcon(action, row)}
-                              </React.Fragment>
-                            ))}
-                          </div>
-                        </td>
-                      )}
                     </tr>
-                  ))
-                )}
+                  ) : currentData.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={columns.length + (actions.length > 0 ? 1 : 0) + 1}
+                        className="px-4 py-3 text-center text-gray-500"
+                      >
+                        No data available
+                      </td>
+                    </tr>
+                  ) : (
+                    currentData.map((row, rowIndex) => (
+                      <tr
+                        key={rowIndex}
+                        className={`border-t border-gray-200 transition-colors duration-200 w-max ${
+                          selectedRows.includes(row)
+                            ? "bg-gray-50 dark:bg-gray-700 border-l-4 border-l-teal"
+                            : "hover:bg-gray-50 dark:hover:bg-gray-700"
+                        }`}
+                      >
+                        {/* Case à cocher pour chaque ligne */}
+                        <td className="px-4 py-3 w-12">
+                          <input
+                            type="checkbox"
+                            checked={selectedRows.includes(row)}
+                            onChange={() => handleRowSelection(row)}
+                            className="h-4 w-4 text-teal border-gray-300 rounded cursor-pointer"
+                          />
+                        </td>
+                        {columns.map((column, colIndex) => (
+                          <td key={colIndex} className="px-4 py-3 text-sm text-foreground">
+                            {typeof column.accessor === "function"
+                              ? column.accessor(row)
+                              : row[column.accessor] as React.ReactNode}
+                          </td>
+                        ))}
+                        {actions.length > 0 && (
+                          <td className="px-4 py-3 text-right w-32">
+                            <div className="flex justify-end space-x-2">
+                              {actions.map((action, actionIndex) => (
+                                <React.Fragment key={actionIndex}>
+                                  {getActionIcon(action, row)}
+                                </React.Fragment>
+                              ))}
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))
+                  )
+                }
               </tbody>
             </table>
           </div>

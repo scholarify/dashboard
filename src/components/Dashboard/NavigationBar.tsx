@@ -6,6 +6,7 @@ import DarkModeToggle from "../widgets/DarkMode";
 import AvatarImage from "../widgets/AvatarImage";
 import Breadcrumbs from './BreadCrums'
 import UserMenuModal from "../widgets/UserMenuModal";
+import useAuth from "@/app/hooks/useAuth";
 
 interface NavigationBarProps {
   icon: any;
@@ -16,7 +17,7 @@ interface NavigationBarProps {
 }
 export default function NavigationBar({ icon: Icon, baseHref, title, toggleSidebar, isSidebarOpen }: NavigationBarProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
-
+  const {user} = useAuth();
   // Vérifier le thème au chargement
   useEffect(() => {
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -62,21 +63,9 @@ export default function NavigationBar({ icon: Icon, baseHref, title, toggleSideb
         <button className="hidden lg:flex p-2 text-gray-600 dark:text-gray-300 hover:text-foreground transition">
           <Bell className="w-6 h-6" />
         </button>
-
-        {/* <DarkModeToggle /> */}
-
-        {/* <button className="hidden lg:flex p-2 text-gray-600 dark:text-gray-300 hover:text-foreground transition">
-          <Settings className="w-6 h-6" />
-        </button> */}
-
-        {/* <button className=" md:flex">
-            <AvatarImage
-            src="https://images.ctfassets.net/h6goo9gw1hh6/2sNZtFAWOdP1lmQ33VwRN3/24e953b920a9cd0ff2e1d587742a2472/1-intro-photo-final.jpg?w=1200&h=992&fl=progressive&q=70&fm=jpg"
-            />
-        </button> */}
         <UserMenuModal
           avatarUrl="https://images.ctfassets.net/h6goo9gw1hh6/2sNZtFAWOdP1lmQ33VwRN3/24e953b920a9cd0ff2e1d587742a2472/1-intro-photo-final.jpg?w=1200&h=992&fl=progressive&q=70&fm=jpg"
-          userName="John Doe"
+          userName= {user?.name || ""}
           onSignOut={handleSignOut}
           onToggleTheme={toggleTheme}
           isDarkMode={isDarkMode}
