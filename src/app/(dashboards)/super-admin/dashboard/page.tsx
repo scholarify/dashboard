@@ -5,6 +5,11 @@ import SuperLayout from "@/components/Dashboard/Layouts/SuperLayout";
 import StatsOverview from "@/components/widgets/StatsOverview";
 import AChart from "@/components/utils/AChart";
 import PerformanceTable from "@/components/utils/PerformanceTable";
+import useAuth from "@/app/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import CircularLoader from "@/components/widgets/CircularLoader";
+import ProtectedRoute from "@/components/utils/ProtectedRoute";
 const BASE_URL = "/super-admin";
 
 
@@ -77,31 +82,36 @@ const performanceData = [
 const metricOptions = ["Number of Active Subscriptions", "Average Grade"];
 
 export default function Page() {
-  return (
-    <SuperLayout
-      navigation={navigation}
-      showGoPro={true}
-      onLogout={() => console.log("Logged out")}
-    >
-      <div className="flex flex-col gap-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <StatsOverview value="12,058" changePercentage={5.78} title="Total Revenue (USD)" icon={<DollarSign />} />
-          <StatsOverview value="9,842" changePercentage={-2.35} title="Total Schools" icon={<School />} />
-          <StatsOverview value="12,058" changePercentage={5.78} title="Total Students" icon={<GraduationCap />} />
-          <StatsOverview value="9,842" changePercentage={-2.35} title="Total Users" icon={<UserIcon />} />
-        </div>
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <div className="rounded-lg border border-stroke p-4 h-max">
-            <AChart />
-          </div>
-          <PerformanceTable
-            data={performanceData}
-            defaultItemsPerPage={5}
-            metricOptions={metricOptions}
-          />
-        </div>
+  const { logout, user } = useAuth();
 
-      </div>
-    </SuperLayout>
+  return (
+    <ProtectedRoute>
+      <SuperLayout
+        navigation={navigation}
+        showGoPro={true}
+        onLogout={() => logout()}
+      >
+
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <StatsOverview value="12,058" changePercentage={5.78} title="Total Revenue (USD)" icon={<DollarSign />} />
+            <StatsOverview value="9,842" changePercentage={-2.35} title="Total Schools" icon={<School />} />
+            <StatsOverview value="12,058" changePercentage={5.78} title="Total Students" icon={<GraduationCap />} />
+            <StatsOverview value="9,842" changePercentage={-2.35} title="Total Users" icon={<UserIcon />} />
+          </div>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div className="rounded-lg border border-stroke p-4 h-max">
+              <AChart />
+            </div>
+            <PerformanceTable
+              data={performanceData}
+              defaultItemsPerPage={5}
+              metricOptions={metricOptions}
+            />
+          </div>
+
+        </div>
+      </SuperLayout>
+    </ProtectedRoute>
   );
 }

@@ -2,12 +2,16 @@
 
 import { School } from "lucide-react";
 import SuperLayout from "@/components/Dashboard/Layouts/SuperLayout";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import DataTable from "@/components/utils/DataTable";
 import { useRouter } from "next/navigation";
 import CreateSchoolModal from "./components/CreateSchoolModal";
 import DeleteSchoolModal from "./components/DeleteSchoolModal";
 import CircularLoader from "@/components/widgets/CircularLoader";
+import useAuth from "@/app/hooks/useAuth";
+import ProtectedRoute from "@/components/utils/ProtectedRoute";
+import { SchoolSchema } from "@/app/models/SchoolModel";
+import { getSchools } from "@/app/services/SchoolServices";
 
 const BASE_URL = "/super-admin";
 
@@ -31,7 +35,7 @@ interface School {
 }
 
 // Données d'exemple
-const initialSchools: School[] = [
+const initSchools: School[] = [
   {
     id: "SCH001",
     name: "Acme High",
@@ -68,19 +72,37 @@ const initialSchools: School[] = [
 
 function SchoolContent() {
   const router = useRouter();
-  const [schools, setSchools] = useState(initialSchools);
-  const [selectedSchools, setSelectedSchools] = useState<School[]>([]);
+  const [schools, setSchools] = useState<SchoolSchema[]>([]);
+  const [loadingData, setLoadingData] = useState(false);
+  // const [schools, setSchools] = useState<SchoolSchema[]>([]);
+
+  useEffect(() => {
+    const fetchSchools = async () => {
+      setLoadingData(true);
+      try {
+        const fetchedSchools = await getSchools();
+        setSchools(fetchedSchools);
+      } catch (error) {
+        console.error("Error fetching schools:", error);
+      } finally {
+        setLoadingData(false);
+      }
+    };
+    fetchSchools();
+  }, []);
+  const [selectedSchools, setSelectedSchools] = useState<SchoolSchema[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // État pour le modal de suppression
-  const [schoolToDelete, setSchoolToDelete] = useState<School | null>(null); // École à supprimer
+  const [schoolToDelete, setSchoolToDelete] = useState<SchoolSchema | null>(null); // École à supprimer
+
 
   // Colonnes du tableau
   const columns = [
-    { header: "School ID", accessor: "id" as keyof School },
-    { header: "School Name", accessor: "name" as keyof School },
-    { header: "Email", accessor: "email" as keyof School },
-    { header: "Principal", accessor: "principal" as keyof School },
-    { header: "Creation Date", accessor: "creationDate" as keyof School },
+    { header: "School ID", accessor: (row: SchoolSchema) => row.school_id },
+    { header: "School Name", accessor: (row: SchoolSchema) => row.name },
+    { header: "Email", accessor: (row: SchoolSchema) => row.email },
+    { header: "Principal", accessor: (row: SchoolSchema) => row.principal_name },
+    { header: "Established Year", accessor: (row: SchoolSchema) => row.established_year },
   ];
 
   // Gérer la suppression d'une école
@@ -92,7 +114,7 @@ function SchoolContent() {
     }
 
     if (schoolToDelete) {
-      setSchools(schools.filter((s) => s.id !== schoolToDelete.id));
+      setSchools(schools.filter((s) => s.school_id !== schoolToDelete.school_id));
       setSchoolToDelete(null);
     }
   };
@@ -101,13 +123,13 @@ function SchoolContent() {
   const actions = [
     {
       label: "View",
-      onClick: (school: School) => {
-        router.push(`${BASE_URL}/schools/view?id=${school.id}`);
+      onClick: (school: SchoolSchema) => {
+        router.push(`${BASE_URL}/schools/view?id=${school.school_id}`);
       },
     },
     {
       label: "Delete",
-      onClick: (school: School) => {
+      onClick: (school: SchoolSchema) => {
         setSchoolToDelete(school); // Stocker l'école à supprimer
         setIsDeleteModalOpen(true); // Ouvrir le modal de suppression
       },
@@ -128,20 +150,22 @@ function SchoolContent() {
 
   // Gérer l'ajout d'une nouvelle école
   const handleSave = (schoolData: any) => {
-    const newSchool: School = {
-      id: `SCH${schools.length + 1}`,
+    const newSchool: SchoolSchema = {
+      school_id: `SCH${schools.length + 1}`,
       name: schoolData.schoolName,
       email: schoolData.email,
-      principal: schoolData.principalName,
-      creationDate: new Date().toLocaleDateString("en-GB"),
+      principal_name: schoolData.principalName,
+      established_year: new Date().toLocaleDateString("en-GB"),
       address: schoolData.address,
       website: schoolData.website,
-      phoneNumber: schoolData.phoneNumber,
+      phone_numer: schoolData.phoneNumber,
       description: schoolData.description,
     };
     setSchools([...schools, newSchool]);
     console.log("New school data:", schoolData);
   };
+
+
 
   return (
     <div className="md:p-6">
@@ -152,11 +176,13 @@ function SchoolContent() {
         Add New School
       </button>
 
-      <DataTable
+      <DataTable<SchoolSchema>
         columns={columns}
         data={schools}
         actions={actions}
         defaultItemsPerPage={5}
+        loading={loadingData}
+        onLoadingChange={setLoadingData}
         onSelectionChange={setSelectedSchools}
       />
 
@@ -184,6 +210,7 @@ function SchoolContent() {
 }
 
 export default function Page() {
+  const {  logout } = useAuth();
   return (
     <Suspense fallback={
       <div>
@@ -192,13 +219,15 @@ export default function Page() {
         </div>
       </div>
     }>
-      <SuperLayout
-        navigation={navigation}
-        showGoPro={true}
-        onLogout={() => console.log("Logged out")}
-      >
-        <SchoolContent />
-      </SuperLayout>
+      <ProtectedRoute>
+        <SuperLayout
+          navigation={navigation}
+          showGoPro={true}
+          onLogout={() => logout()}
+        >
+          <SchoolContent />
+        </SuperLayout>
+      </ProtectedRoute>
     </Suspense>
   )
 }

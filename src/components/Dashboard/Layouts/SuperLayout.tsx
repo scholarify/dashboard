@@ -10,6 +10,7 @@ import GoPro from "../GoPro";
 import NavigationBar from "../NavigationBar";
 import { Menu, X } from "lucide-react";
 import Breadcrumbs from "../BreadCrums";
+import useAuth from "@/app/hooks/useAuth";
 
 interface DashboardLayoutProps {
   navigation: {
@@ -28,12 +29,13 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
   onLogout,
   children,
 }) => {
+  const {user} = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const avatar = {
     avatarUrl:
       "https://images.ctfassets.net/h6goo9gw1hh6/2sNZtFAWOdP1lmQ33VwRN3/24e953b920a9cd0ff2e1d587742a2472/1-intro-photo-final.jpg?w=1200&h=992&fl=progressive&q=70&fm=jpg",
-    name: "John Doe",
-    role: "Super Admin",
+    name: user?.name,
+    role: user?.role,
   };
   const BASE_URL = "/super-admin";
 
@@ -91,8 +93,8 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
           <Divider />
           <Avatar
             avatarUrl={avatar.avatarUrl}
-            name={avatar.name}
-            role={avatar.role}
+            name={avatar.name || ""}
+            role={avatar.role || ""}
             onLogout={onLogout}
           />
         </div>

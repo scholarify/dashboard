@@ -6,9 +6,15 @@ import FormHeading from "@/components/FormHeading";
 import { Loader2 } from "lucide-react";
 import NotificationCard from "@/components/NotificationCard";
 import '@/styles/formStyle.css';
+import useAuth from "@/app/hooks/useAuth";
+import { redirect, useRouter } from "next/navigation";
+import CircularLoader from "@/components/widgets/CircularLoader";
 
 export default function Login() {
     const [isLoading, setIsLoading] = useState(false);
+    const { login, isAuthenticated, loading, redirectAfterLogin } = useAuth();
+    const router = useRouter();
+    // State pour les champs de formulaire
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [rememberMe, setRememberMe] = useState(false);
@@ -16,40 +22,36 @@ export default function Login() {
     const [errorMessage, setErrorMessage] = useState('');
     const [hasError, setHasError] = useState(false);
 
-
-
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen w-full absolute top-0 left-0 z-50">
+                <CircularLoader size={40} color="teal-500" />
+            </div>
+        );
+    }
+    // redirection vers la page d'accueil si l'utilisateur est déjà connecté
+    if (isAuthenticated) {
+        const redirectTo = redirectAfterLogin || '/super-admin/dashboard';
+        router.push(redirectTo);
+        return null;
+    }
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        if (!email) {
-            setErrorMessage('Email is required.');
-            setHasError(true);
-            return;
-        }
         setIsLoading(true);
-
         try {
-            // Remplacer par une requête API réelle
-            const response = await fetch('/api/password/reset', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email: email, password: password, rememberMe: rememberMe }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Erreur lors de la soumission');
-            }
-
-            // Succès : rediriger ou afficher un message
-            console.log('Login successful!');
+            await login(email, password);
+            setErrorMessage('');
+            setHasError(false);
+            setEmail('');
+            setPassword('');
+            setRememberMe(false);
+            router.push('/super-admin/dashboard');
         } catch (error) {
             setErrorMessage("The email or password you entered doesn't match our records. Please double-check and try again.");
             setHasError(true);
         } finally {
             setIsLoading(false);
             setPassword('');
-            window.location.href = '/super-admin/schools';
         }
     };
 
@@ -71,9 +73,9 @@ export default function Login() {
                             formIcon={
                                 <svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <rect x="1.25" y="1.25" width="47.5" height="47.5" rx="13.75" stroke="#17B890" strokeWidth="2.5" />
-                                    <path d="M27.167 17.832H30.5003C30.9424 17.832 31.3663 18.0076 31.6788 18.3202C31.9914 18.6327 32.167 19.0567 32.167 19.4987V31.1654C32.167 31.6074 31.9914 32.0313 31.6788 32.3439C31.3663 32.6564 30.9424 32.832 30.5003 32.832H27.167" stroke="#17B890" strokeWidth="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                                    <path d="M23 29.4974L27.1667 25.3307L23 21.1641" stroke="#17B890" strokeWidth="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                                    <path d="M27.167 25.332H17.167" stroke="#17B890" strokeWidth="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                                    <path d="M27.167 17.832H30.5003C30.9424 17.832 31.3663 18.0076 31.6788 18.3202C31.9914 18.6327 32.167 19.0567 32.167 19.4987V31.1654C32.167 31.6074 31.9914 32.0313 31.6788 32.3439C31.3663 32.6564 30.9424 32.832 30.5003 32.832H27.167" stroke="#17B890" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M23 29.4974L27.1667 25.3307L23 21.1641" stroke="#17B890" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M27.167 25.332H17.167" stroke="#17B890" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                             }
                         />
@@ -87,7 +89,7 @@ export default function Login() {
                             message={errorMessage}
                             type="error"
                             isVisible={hasError}
-                            onClose={() => { 
+                            onClose={() => {
                                 setErrorMessage('');
                                 setHasError(false);
                             }}
