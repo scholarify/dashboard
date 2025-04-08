@@ -11,8 +11,8 @@ export function getTokenFromCookie(name: string) {
 export async function getCurrentUser(){
     const token = getTokenFromCookie("idToken");
     if (token) {
-        const decodedUser = jwtDecode(token);
-        const email = decodedUser.email;
+        const decodedUser: any = jwtDecode(token);
+        const email = decodedUser.email as string;
         const response = await fetch(`${BASE_API_URL}/user/get-user-email/${email}`, {
             method: "GET",
             headers: {
