@@ -18,7 +18,7 @@ export default function Page() {
     title: "Schools",
   };
 
-  interface User {
+  interface User extends Record<string, unknown>{
     id: string;
     name: string;
     email: string;
