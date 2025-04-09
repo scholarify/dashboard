@@ -214,7 +214,7 @@ const DataTable = <T extends Record<string, unknown>>({
         </div>
       )}
 
-      <div className="w-full rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col">
+      <div className="max-w-max w-full rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col">
         {/* Zone de recherche */}
         {hasSearch && (
           <div className="p-4">
@@ -272,7 +272,7 @@ const DataTable = <T extends Record<string, unknown>>({
         <div className="w-full flex flex-col">
           {/* Tableau avec défilement */}
           <div className="max-h-[400px] overflow-y-auto">
-            <table className="lg:w-full w-max table-auto border-collapse">
+            <table className=" w-max table-auto border-collapse">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-800 text-left text-sm font-semibold text-foreground p-3">
                   {/* Case à cocher pour tout sélectionner */}

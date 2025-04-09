@@ -10,8 +10,10 @@ import DeleteSchoolModal from "./components/DeleteSchoolModal";
 import CircularLoader from "@/components/widgets/CircularLoader";
 import useAuth from "@/app/hooks/useAuth";
 import ProtectedRoute from "@/components/utils/ProtectedRoute";
-import { SchoolSchema } from "@/app/models/SchoolModel";
-import { getSchools } from "@/app/services/SchoolServices";
+import { SchoolCreateSchema, SchoolSchema } from "@/app/models/SchoolModel";
+import { createSchool, getSchools } from "@/app/services/SchoolServices";
+import Link from "next/link";
+import NotificationCard from "@/components/NotificationCard";
 
 const BASE_URL = "/super-admin";
 
@@ -94,15 +96,20 @@ function SchoolContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // État pour le modal de suppression
   const [schoolToDelete, setSchoolToDelete] = useState<SchoolSchema | null>(null); // École à supprimer
-
+  
+  const [isNotificationCard, setIsNotificationCard] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
 
   // Colonnes du tableau
   const columns = [
     { header: "School ID", accessor: (row: SchoolSchema) => row.school_id },
-    { header: "School Name", accessor: (row: SchoolSchema) => row.name },
+    { header: "School Name", accessor: (row: SchoolSchema) => { return <Link href={`${BASE_URL}/schools/view?id=${row.school_id}`}>{row.name}</Link>; } },
     { header: "Email", accessor: (row: SchoolSchema) => row.email },
     { header: "Principal", accessor: (row: SchoolSchema) => row.principal_name },
     { header: "Established Year", accessor: (row: SchoolSchema) => row.established_year },
+    { header: "Address", accessor: (row: SchoolSchema) => row.address },
+    { header: "Website", accessor: (row: SchoolSchema) => row.website },
+    { header: "Phone Number", accessor: (row: SchoolSchema) => row.phone_number },
   ];
 
   // Gérer la suppression d'une école
@@ -129,6 +136,7 @@ function SchoolContent() {
     },
     {
       label: "Delete",
+
       onClick: (school: SchoolSchema) => {
         setSchoolToDelete(school); // Stocker l'école à supprimer
         setIsDeleteModalOpen(true); // Ouvrir le modal de suppression
@@ -149,26 +157,69 @@ function SchoolContent() {
   };
 
   // Gérer l'ajout d'une nouvelle école
-  const handleSave = (schoolData: any) => {
-    const newSchool: SchoolSchema = {
-      school_id: `SCH${schools.length + 1}`,
-      name: schoolData.schoolName,
-      email: schoolData.email,
-      principal_name: schoolData.principalName,
-      established_year: new Date().toLocaleDateString("en-GB"),
-      address: schoolData.address,
-      website: schoolData.website,
-      phone_numer: schoolData.phoneNumber,
-      description: schoolData.description,
-    };
-    setSchools([...schools, newSchool]);
-    console.log("New school data:", schoolData);
+  const handleSave = async (schoolData: SchoolCreateSchema) => {
+    setLoadingData(true);
+    try {
+      const newSchool: SchoolCreateSchema = {
+        name: schoolData.name,
+        email: schoolData.email,
+        principal_name: schoolData.principal_name,
+        established_year: new Date().toLocaleDateString("en-US"),
+        address: schoolData.address,
+        website: schoolData.website,
+        phone_number: schoolData.phone_number,
+        description: schoolData.description,
+      };
+      const data = await createSchool(newSchool);
+      if (data) {
+        const school: SchoolSchema = {
+          school_id: data.school_id,
+          name: data.name,
+          email: data.email,
+          principal_name: data.principal_name,
+          established_year: data.established_year,
+          address: data.address,
+          website: data.website,
+          phone_number: data.phone_number,
+          description: data.description,
+        };
+        setSchools((prev) => [...prev, school]);
+        setNotificationMessage("School created successfully!");
+        setIsNotificationCard(true);
+      }
+    } catch (error) {
+      console.error("Error creating school:", error);
+
+    } finally {
+      setIsModalOpen(false);
+      setLoadingData(false);
+    }
+
   };
 
 
 
   return (
     <div className="md:p-6">
+      {isNotificationCard && (
+        <NotificationCard
+          title="Notification"
+          icon={
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z" stroke="#15803d " strokeWidth="1.5" stroke-linecap="round" strokeLinejoin="round" />
+              <path d="M7.75 11.9999L10.58 14.8299L16.25 9.16992" stroke="#15803d " strokeWidth="1.5" stroke-linecap="round" strokeLinejoin="round" />
+            </svg>
+
+          }
+          message={notificationMessage}
+          onClose={() => setIsNotificationCard(false)}
+          type="success"
+          isVisible={isNotificationCard}
+          isFixed={true}
+        />
+      )
+
+      }
       <button
         onClick={() => setIsModalOpen(true)}
         className="mb-4 px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600"
@@ -210,7 +261,7 @@ function SchoolContent() {
 }
 
 export default function Page() {
-  const {  logout } = useAuth();
+  const { logout } = useAuth();
   return (
     <Suspense fallback={
       <div>

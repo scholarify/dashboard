@@ -107,7 +107,7 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
         onClick={() => setIsSidebarOpen(false)}
       ></div>
       {/* Main Content */}
-      <div className="sm:px-6 px-2 py-2 w-full flex flex-col gap-4 ">
+      <div className="sm:px-6 px-2 py-2 w-full flex flex-col gap-4 lg:w-[80%]">
         <div className="sticky top-0 z-20 flex items-center justify-between   ">
           <NavigationBar
             icon={navigation.icon}
