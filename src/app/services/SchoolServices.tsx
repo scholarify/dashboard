@@ -38,3 +38,31 @@ export async function getSchools() {
         
     }
 }
+
+export async function getSchoolById(schoolId: string) {
+    const response = await fetch(`${BASE_API_URL}/school/get-school/${schoolId}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getTokenFromCookie("idToken")}`,
+        },
+    });
+    if (!response.ok) {
+        console.error("Error fetching school:", response.statusText);
+        throw new Error("Failed to fetch school data");
+    }
+    const data = await response.json();
+
+    const school = {
+        school_id: data.school_id,
+        name: data.name,
+        email: data.email,
+        address: data.address,
+        website: data.website,
+        phone_number: data.phone_number,
+        principal_name: data.principal_name,
+        established_year: data.established_year,
+        description: data.description,
+    } as SchoolSchema;
+    return school;
+}

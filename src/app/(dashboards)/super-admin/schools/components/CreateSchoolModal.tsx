@@ -2,54 +2,45 @@
 
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import { SchoolSchema } from "@/app/models/SchoolModel";
+import CustomInput from "@/components/inputs/CustomInput";
+import CustomPhoneInput from "@/components/inputs/CustomPhoneInput";
+import CustomTextarea from "@/components/inputs/CustomTextarea";
+import CustomDateInput from "@/components/inputs/CustomDateInput";
 
 interface CreateSchoolProps {
   onClose: () => void;
-  onSave: (schoolData: SchoolData) => void;
-  initialData?: SchoolData; // Ajout des données initiales pour l'édition
-}
-
-interface SchoolData {
-  schoolName: string;
-  email: string;
-  address: string;
-  website: string;
-  principalName: string;
-  creationDate?: string;
-  phoneNumber: string;
-  description: string;
+  onSave: (schoolData: SchoolSchema) => void;
+  initialData?: SchoolSchema;
 }
 
 const CreateSchoolModal: React.FC<CreateSchoolProps> = ({ onClose, onSave, initialData }) => {
-  // État pour les données du formulaire
-  const [formData, setFormData] = useState<SchoolData>(
+  const [formData, setFormData] = useState<SchoolSchema>(
     initialData || {
-      schoolName: "",
+      school_id: "",
+      name: "",
       email: "",
       address: "",
       website: "",
-      principalName: "",
-      creationDate: "",
-      phoneNumber: "",
+      principal_name: "",
+      established_year: "",
+      phone_numer: "",
       description: "",
     }
   );
 
-  // État pour le code pays
-  const [countryCode, setCountryCode] = useState("+44");
+  const [countryCode, setCountryCode] = useState("+237");
 
-  // Pré-remplir le code pays et le numéro de téléphone si initialData est fourni
   useEffect(() => {
-    if (initialData?.phoneNumber) {
-      const phone = initialData.phoneNumber;
-      const code = phone.match(/^\+\d+/)?.[0] || "+44";
+    if (initialData?.phone_numer) {
+      const phone = initialData.phone_numer;
+      const code = phone.match(/^\+\d+/)?.[0] || "+237";
       const number = phone.replace(code, "");
       setCountryCode(code);
-      setFormData((prev) => ({ ...prev, phoneNumber: number }));
+      setFormData((prev) => ({ ...prev, phone_numer: number }));
     }
   }, [initialData]);
 
-  // Gérer les changements dans les champs
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
@@ -57,17 +48,15 @@ const CreateSchoolModal: React.FC<CreateSchoolProps> = ({ onClose, onSave, initi
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Gérer la soumission du formulaire
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ ...formData, phoneNumber: `${countryCode}${formData.phoneNumber}` });
+    onSave({ ...formData, phone_numer: `${countryCode}${formData.phone_numer}` });
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ">
-      <div className="max-h-svh overflow-y-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-md mx-4 sm:mx-6 md:mx-0 p-6 relative">
-        {/* En-tête du modal */}
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="max-h-svh overflow-y-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-max mx-4 sm:mx-6 md:mx-0 p-6 relative">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-foreground">
             {initialData ? "Edit School" : "Add New School"}
@@ -77,143 +66,89 @@ const CreateSchoolModal: React.FC<CreateSchoolProps> = ({ onClose, onSave, initi
           </button>
         </div>
 
-        {/* Formulaire */}
         <form onSubmit={handleSubmit}>
-          {/* School Name */}
-          <div className="mb-4">
-            <label htmlFor="schoolName" className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
-              School Name
-            </label>
-            <input
-              type="text"
+          <div className="lg:grid lg:grid-cols-2 gap-4">
+            {/* School Name */}
+            <CustomInput
+              label="School Name"
               id="schoolName"
-              name="schoolName"
-              value={formData.schoolName}
+              name="name"
+              value={formData.name}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
               required
             />
-          </div>
 
-          {/* Email */}
-          <div className="mb-4">
-            <label htmlFor="email" className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
+            {/* Email */}
+            <CustomInput
+              label="Email"
               id="email"
               name="email"
-              value={formData.email}
+              type="email"
+              value={formData.email || ""}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
               required
             />
-          </div>
 
-          {/* Address */}
-          <div className="mb-4">
-            <label htmlFor="address" className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
-              Address
-            </label>
-            <input
-              type="text"
+            {/* Address */}
+            <CustomInput
+              label="Address"
               id="address"
               name="address"
-              value={formData.address}
+              value={formData.address || ""}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
               required
             />
-          </div>
 
-          {/* Website */}
-          <div className="mb-4">
-            <label htmlFor="website" className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
-              Website
-            </label>
-            <input
-              type="url"
+            {/* Website */}
+            <CustomInput
+              label="Website"
               id="website"
               name="website"
-              value={formData.website}
+              type="url"
+              value={formData.website || ""}
               onChange={handleChange}
               placeholder="https://"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
             />
-          </div>
 
-          {/* Principal Name */}
-          <div className="mb-4">
-            <label htmlFor="principalName" className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
-              Principal Name
-            </label>
-            <input
-              type="text"
+            {/* Principal Name */}
+            <CustomInput
+              label="Principal Name"
               id="principalName"
-              name="principalName"
-              value={formData.principalName}
+              name="principal_name"
+              value={formData.principal_name || ""}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
               required
             />
-          </div>
 
-          {/* Created At */}
-            <div className="mb-4">
-                <label htmlFor="creationDate" className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
-                Creation Date
-                </label>
-                <input
-                type="date"
-                id="creationDate"
-                name="creationDate"
-                value={formData.creationDate}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
-                />
-            </div>
+            {/* Creation Date */}
+            <CustomDateInput
+              label="Creation Date"
+              id="creationDate"
+              name="established_year"
+              value={formData.established_year || ""}
+              onChange={handleChange}
+            />
 
-          {/* Phone Number */}
-          <div className="mb-4">
-            <label htmlFor="phoneNumber" className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
-              Phone Number
-            </label>
-            <div className="flex items-center space-x-2">
-              <select
-                value={countryCode}
-                onChange={(e) => setCountryCode(e.target.value)}
-                className="px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
-              >
-                <option value="+44">🇬🇧 +44</option>
-                <option value="+33">🇫🇷 +33</option>
-                <option value="+1">🇺🇸 +1</option>
-              </select>
-              <input
-                type="tel"
-                id="phoneNumber"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                placeholder="000 000 0000"
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
-                required
-              />
-            </div>
-          </div>
+            {/* Phone Number */}
+            <CustomPhoneInput
+              label="Phone Number"
+              id="phoneNumber"
+              name="phone_numer"
+              value={formData.phone_numer || ""}
+              onChange={handleChange}
+              countryCode={countryCode}
+              onCountryCodeChange={(e) => setCountryCode(e.target.value)}
+              required
+            />
 
-          {/* Description */}
-          <div className="mb-4">
-            <label htmlFor="description" className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
-              Description
-            </label>
-            <textarea
+            {/* Description */}
+            <CustomTextarea
+              label="Description"
               id="description"
               name="description"
-              value={formData.description}
+              value={formData.description || ""}
               onChange={handleChange}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
             />
           </div>
 

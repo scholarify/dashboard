@@ -12,6 +12,7 @@ import useAuth from "@/app/hooks/useAuth";
 import ProtectedRoute from "@/components/utils/ProtectedRoute";
 import { SchoolSchema } from "@/app/models/SchoolModel";
 import { getSchools } from "@/app/services/SchoolServices";
+import Link from "next/link";
 
 const BASE_URL = "/super-admin";
 
@@ -99,10 +100,13 @@ function SchoolContent() {
   // Colonnes du tableau
   const columns = [
     { header: "School ID", accessor: (row: SchoolSchema) => row.school_id },
-    { header: "School Name", accessor: (row: SchoolSchema) => row.name },
+    { header: "School Name", accessor: (row: SchoolSchema) => { return <Link href={`${BASE_URL}/schools/view?id=${row.school_id}`}>{row.name}</Link>; } },
     { header: "Email", accessor: (row: SchoolSchema) => row.email },
     { header: "Principal", accessor: (row: SchoolSchema) => row.principal_name },
     { header: "Established Year", accessor: (row: SchoolSchema) => row.established_year },
+    { header: "Address", accessor: (row: SchoolSchema) => row.address },
+    { header: "Website", accessor: (row: SchoolSchema) => row.website },
+    { header: "Phone Number", accessor: (row: SchoolSchema) => row.phone_numer },
   ];
 
   // Gérer la suppression d'une école
@@ -129,6 +133,7 @@ function SchoolContent() {
     },
     {
       label: "Delete",
+
       onClick: (school: SchoolSchema) => {
         setSchoolToDelete(school); // Stocker l'école à supprimer
         setIsDeleteModalOpen(true); // Ouvrir le modal de suppression
