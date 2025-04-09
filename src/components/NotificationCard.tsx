@@ -31,6 +31,7 @@ export default function NotificationCard({
     info: 'bg-blue-100 border-blue-500 text-blue-700',
     warning: 'bg-yellow-100 border-yellow-500 text-yellow-700',
   };
+  
 
   const typeStyle = typeStyles[type as keyof typeof typeStyles] || typeStyles.info; // Par défaut, "info"
   setTimeout(() => {
@@ -38,8 +39,8 @@ export default function NotificationCard({
   }, 5000);
   return (
     <div
-      className={`mb-4 top-4 right-4  w-full p-4 rounded-lg shadow-lg border-l-4 ${typeStyle} flex items-start space-x-3 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'
-        } ${isFixed ? 'fixed max-w-sm' : ''}`}
+      className={`mb-4 top-4 right-4  w-full p-4 rounded-lg  shadow-lg border-l-4 ${typeStyle} flex items-start space-x-3 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'
+        } ${isFixed ? 'fixed max-w-sm z-50' : ''}`}
     >
       {/* Icône */}
       <div className="flex-shrink-0">{icon}</div>

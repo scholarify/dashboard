@@ -7,8 +7,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import CreateSchoolModal from "../components/CreateSchoolModal";
 import DeleteSchoolModal from "../components/DeleteSchoolModal";
 import CircularLoader from "@/components/widgets/CircularLoader";
-import { getSchoolById } from "@/app/services/SchoolServices";
-import { SchoolSchema } from "@/app/models/SchoolModel";
+import { getSchoolById, updateSchool } from "@/app/services/SchoolServices";
+import { SchoolSchema, SchoolUpdateSchema } from "@/app/models/SchoolModel";
+import NotificationCard from "@/components/NotificationCard";
 
 
 
@@ -28,6 +29,9 @@ function SchoolViewDetailContent() {
     const [school, setSchool] = useState<SchoolSchema | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [loadingData, setLoadingData] = useState(false);
+    const [isNotificationCard, setIsNotificationCard] = useState(false);
+    const [notificationMessage, setNotificationMessage] = useState("");
 
     // Charger les détails de l'école en fonction de l'ID
     useEffect(() => {
@@ -39,7 +43,7 @@ function SchoolViewDetailContent() {
                 const foundSchool = await getSchoolById(schoolId);
                 if (foundSchool) {
                     setSchool(foundSchool);
-                }else{
+                } else {
                     // Rediriger si l'école n'est pas trouvée
                     router.push(`${BASE_URL}/schools`);
                 }
@@ -48,7 +52,7 @@ function SchoolViewDetailContent() {
             }
         }
         fetchSchoolDetails();
-        
+
     }, [schoolId, router]);
 
     // Gérer la suppression de l'école
@@ -84,25 +88,41 @@ function SchoolViewDetailContent() {
     };
 
     // Gérer la sauvegarde après modification
-    const handleSave = (schoolData: SchoolSchema) => {
+    const handleSave = async (schoolData: SchoolSchema) => {
         if (school) {
-            const updatedSchool: SchoolSchema = {
-                school_id: school.school_id,
-                name: schoolData.name,
-                email: schoolData.email,
-                principal_name: schoolData.principal_name,
-                established_year: school.established_year,
-                address: schoolData.address,
-                website: schoolData.website,
-                phone_numer: schoolData.phone_numer,
-                description: schoolData.description,
-            };
-            // Simuler la mise à jour (dans un vrai projet, fais une requête API)
-            // const index = schoolsData.findIndex((s) => s.id === school.school_id);
-            // if (index !== -1) {
-            //     schoolsData[index] = updatedSchool;
-            //     setSchool(updatedSchool);
-            // }
+            setLoadingData(true);
+            try {
+                const updatedSchool: SchoolUpdateSchema = {
+                    school_id: school.school_id,
+                    name: schoolData.name,
+                    email: schoolData.email,
+                    principal_name: schoolData.principal_name,
+                    established_year: school.established_year,
+                    address: schoolData.address,
+                    website: schoolData.website,
+                    phone_numer: schoolData.phone_numer,
+                    description: schoolData.description,
+                };
+                if (schoolData.school_id) {
+                    if (school.school_id) {
+                        const data = await updateSchool(school.school_id, updatedSchool);
+                        if (data) {
+                            setSchool(data);
+                            setIsNotificationCard(true);
+                            setNotificationMessage("School updated successfully.");
+                        }
+                    } else {
+                        console.error("School ID is undefined. Cannot update school.");
+                    }
+                }
+            } catch (error) {
+                console.error("Error updating school:", error);
+            } finally {
+                setLoadingData(false);
+                setIsEditModalOpen(false); // Ferme le modal après la sauvegarde}
+
+            }
+
         }
     };
 
@@ -112,8 +132,33 @@ function SchoolViewDetailContent() {
         </div>;
     }
 
+    if (loadingData) {
+        return <div className="flex justify-center items-center h-screen w-full absolute top-0 left-0 z-50">
+            <CircularLoader size={32} color="teal" />
+        </div>;
+    }
+
     return (
         <div>
+            {isNotificationCard && (
+                <NotificationCard
+                    title="Notification"
+                    icon={
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z" stroke="#15803d " strokeWidth="1.5" stroke-linecap="round" strokeLinejoin="round" />
+                            <path d="M7.75 11.9999L10.58 14.8299L16.25 9.16992" stroke="#15803d " strokeWidth="1.5" stroke-linecap="round" strokeLinejoin="round" />
+                        </svg>
+
+                    }
+                    message={notificationMessage}
+                    onClose={() => setIsNotificationCard(false)}
+                    type="success"
+                    isVisible={isNotificationCard}
+                    isFixed={true}
+                />
+            )
+
+            }
             <div className="md:p-6">
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                     {/* Titre */}
@@ -211,7 +256,7 @@ function SchoolViewDetailContent() {
                             <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
                                 Phone Number
                             </p>
-                            <p className="text-sm text-foreground">{school.phone_numer || "N/A"}</p>
+                            <p className="text-sm text-foreground">{school.phone_number || "N/A"}</p>
                         </div>
                     </div>
 
@@ -242,12 +287,12 @@ function SchoolViewDetailContent() {
                         {
                             school_id: school.school_id,
                             name: school.name,
-                            email: school.email,
+                            email: school.email || "",
                             address: school.address || "",
                             website: school.website || "",
                             principal_name: school.principal_name,
                             established_year: school.established_year,
-                            phone_numer: school.phone_numer || "",
+                            phone_number: school.phone_number || "",
                             description: school.description || "",
                         }
                     }

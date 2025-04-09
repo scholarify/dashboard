@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { SchoolSchema } from "@/app/models/SchoolModel";
+import { SchoolCreateSchema, SchoolSchema } from "@/app/models/SchoolModel";
 import CustomInput from "@/components/inputs/CustomInput";
 import CustomPhoneInput from "@/components/inputs/CustomPhoneInput";
 import CustomTextarea from "@/components/inputs/CustomTextarea";
@@ -10,21 +10,20 @@ import CustomDateInput from "@/components/inputs/CustomDateInput";
 
 interface CreateSchoolProps {
   onClose: () => void;
-  onSave: (schoolData: SchoolSchema) => void;
-  initialData?: SchoolSchema;
+  onSave: (schoolData:  SchoolCreateSchema) => void;
+  initialData?: SchoolCreateSchema;
 }
 
 const CreateSchoolModal: React.FC<CreateSchoolProps> = ({ onClose, onSave, initialData }) => {
-  const [formData, setFormData] = useState<SchoolSchema>(
+  const [formData, setFormData] = useState<SchoolCreateSchema | SchoolSchema>(
     initialData || {
-      school_id: "",
       name: "",
       email: "",
       address: "",
       website: "",
       principal_name: "",
       established_year: "",
-      phone_numer: "",
+      phone_number: "",
       description: "",
     }
   );
@@ -33,11 +32,11 @@ const CreateSchoolModal: React.FC<CreateSchoolProps> = ({ onClose, onSave, initi
 
   useEffect(() => {
     if (initialData?.phone_numer) {
-      const phone = initialData.phone_numer;
-      const code = phone.match(/^\+\d+/)?.[0] || "+237";
-      const number = phone.replace(code, "");
+      const phone = initialData.phone_number;
+      const code = (phone ?? "").match(/^\+\d+/)?.[0] || "+237";
+      const number = (phone ?? "").replace(code, "");
       setCountryCode(code);
-      setFormData((prev) => ({ ...prev, phone_numer: number }));
+      setFormData((prev) => ({ ...prev, phone_number: number }));
     }
   }, [initialData]);
 
@@ -50,7 +49,14 @@ const CreateSchoolModal: React.FC<CreateSchoolProps> = ({ onClose, onSave, initi
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ ...formData, phone_numer: `${countryCode}${formData.phone_numer}` });
+    onSave({
+      ...formData,
+      phone_number: `${countryCode}${formData.phone_number}`,
+      email: formData.email || "",
+      address: formData.address || "",
+      website: formData.website || "",
+      description: formData.description || "",
+    });
     onClose();
   };
 
@@ -67,7 +73,7 @@ const CreateSchoolModal: React.FC<CreateSchoolProps> = ({ onClose, onSave, initi
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="lg:grid lg:grid-cols-2 gap-4">
+          <div className="sm:grid sm:grid-cols-2 gap-4">
             {/* School Name */}
             <CustomInput
               label="School Name"
@@ -133,8 +139,8 @@ const CreateSchoolModal: React.FC<CreateSchoolProps> = ({ onClose, onSave, initi
             <CustomPhoneInput
               label="Phone Number"
               id="phoneNumber"
-              name="phone_numer"
-              value={formData.phone_numer || ""}
+              name="phone_number"
+              value={formData.phone_number || ""}
               onChange={handleChange}
               countryCode={countryCode}
               onCountryCodeChange={(e) => setCountryCode(e.target.value)}
