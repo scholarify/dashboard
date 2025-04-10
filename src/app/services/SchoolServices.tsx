@@ -18,6 +18,7 @@ export async function getSchools() {
         const schoolsList = await response.json();
         const schools = schoolsList.map((school: any) => {
             return {
+                _id:school._id,
                 school_id: school.school_id,
                 name: school.name,
                 email: school.email,

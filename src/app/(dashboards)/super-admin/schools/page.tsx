@@ -92,6 +92,7 @@ function SchoolContent() {
     };
     fetchSchools();
   }, []);
+  
   const [selectedSchools, setSelectedSchools] = useState<SchoolSchema[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // État pour le modal de suppression

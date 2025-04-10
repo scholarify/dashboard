@@ -1,24 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { X, ChevronDown } from "lucide-react";
+import { UserSchema, UserCreateSchema } from "@/app/models/UserModel";
+import CustomInput from "@/components/inputs/CustomInput";
+import CustomPhoneInput from "@/components/inputs/CustomPhoneInput";
+import { SchoolSchema } from "@/app/models/SchoolModel";
+
 
 interface CreateUserModalProps {
   onClose: () => void;
-  onSave: (userData: UserData) => void;
+  onSave: (userData: UserCreateSchema) => void;
   roles: string[];
-  schools: string[];
-  initialData?: UserData;
-}
-
-interface UserData {
-  name: string;
-  email: string;
-  role: string;
-  password: string;
-  phone: string;
-  address: string;
-  school: string[]; // multiple schools
+  schools: SchoolSchema[];  // Updated to handle school_id and name
+  initialData?: UserSchema;
 }
 
 const CreateUserModal: React.FC<CreateUserModalProps> = ({
@@ -26,20 +21,31 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   onSave,
   roles,
   schools,
+  initialData,
 }) => {
-  const [formData, setFormData] = useState<UserData>({
+  const [formData, setFormData] = useState<UserCreateSchema>({
     name: "",
     email: "",
-    role: "",
+    role: "admin",
     password: "",
     phone: "",
     address: "",
-    school: [],
+    school_ids: [],
   });
 
-  const [countryCode, setCountryCode] = useState("+44");
+  const [countryCode, setCountryCode] = useState("+237");
   const [searchTerm, setSearchTerm] = useState("");
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false);
+
+  useEffect(() => {
+    if (initialData?.phone) {
+      const phone = initialData.phone;
+      const code = (phone ?? "").match(/^\+\d+/)?.[0] || "+237";
+      const number = (phone ?? "").replace(code, "");
+      setCountryCode(code);
+      setFormData((prev) => ({ ...prev, phone: number }));
+    }
+  }, [initialData]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -50,13 +56,25 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ ...formData, phone: `${countryCode}${formData.phone}` });
+    onSave({
+      ...formData,
+      phone: `${countryCode}${formData.phone}`,
+      name: formData.name,
+      email: formData.email,
+      role: formData.role,
+      password: formData.password,
+      address: formData.address,
+      school_ids: formData.school_ids || [],  // Ensure school_ids is set
+    });
     onClose();
   };
 
-  const filteredSchools = schools.filter((school) =>
-    school.toLowerCase().includes(searchTerm.toLowerCase())
-  ).slice(0, 2);
+  const filteredSchools = (schools || [])
+    .filter((school) =>
+      school.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .slice(0, 2);
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -70,81 +88,55 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
         <form onSubmit={handleSubmit}>
           {/* Full Name */}
-          <div className="mb-4">
-            <label className="block text-sm mb-1">Full Name</label>
-            <input
-              type="text"
-              name="fullName"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
-              required
-            />
-          </div>
+          <CustomInput
+            label="Full Name"
+            id="fullName"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
 
-          {/* Email */}
-          <div className="mb-4">
-            <label className="block text-sm mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
-              required
-            />
-          </div>
+          <CustomInput
+            label="Email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
 
-          {/* Password */}
-          <div className="mb-4">
-            <label className="block text-sm mb-1">Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
-              required
-            />
-          </div>
+          <CustomInput
+            label="Password"
+            id="password"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
 
           {/* Phone */}
-          <div className="mb-4">
-            <label className="block text-sm mb-1">Phone</label>
-            <div className="flex items-center space-x-2">
-              <select
-                value={countryCode}
-                onChange={(e) => setCountryCode(e.target.value)}
-                className="px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal appearance-none bg-transparent"
-              >
-                <option value="+44">🇬🇧 +44</option>
-                <option value="+33">🇫🇷 +33</option>
-                <option value="+1">🇺🇸 +1</option>
-              </select>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="000 000 0000"
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
-                required
-              />
-            </div>
-          </div>
+          <CustomPhoneInput
+            label="Phone Number"
+            id="phone"
+            name="phone"
+            value={formData.phone || ""}
+            onChange={handleChange}
+            countryCode={countryCode}
+            onCountryCodeChange={(e) => setCountryCode(e.target.value)}
+            required
+          />
 
           {/* Address */}
-          <div className="mb-4">
-            <label className="block text-sm mb-1">Address</label>
-            <input
-              type="text"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
-              required
-            />
-          </div>
+          <CustomInput
+            label="Address"
+            id="address"
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+            required
+          />
 
           {/* School and Role (Flex Row) */}
           <div className="mb-4 flex flex-wrap gap-4">
@@ -175,8 +167,11 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-700 bg-white dark:text-white cursor-pointer flex items-center justify-between"
               >
                 <span>
-                  {formData.school.length > 0
-                    ? formData.school.join(", ")
+                  {formData.school_ids && formData.school_ids.length > 0
+                    ? filteredSchools
+                      .filter((school) => formData.school_ids.includes(school._id))
+                      .map((school) => school.name)
+                      .join(", ")
                     : "Select schools"}
                 </span>
                 <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -195,28 +190,29 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
                   {filteredSchools.length > 0 ? (
                     filteredSchools.map((school) => (
                       <label
-                        key={school}
+                        key={school._id}
                         className="flex items-center gap-2 px-2 py-1 text-sm"
                       >
                         <input
                           type="checkbox"
-                          checked={formData.school.includes(school)}
+                          checked={formData.school_ids.includes(school._id)}
                           onChange={(e) => {
                             const isChecked = e.target.checked;
                             setFormData((prev) => ({
                               ...prev,
-                              school: isChecked
-                                ? [...prev.school, school]
-                                : prev.school.filter((s) => s !== school),
+                              school_ids: isChecked
+                                ? [...prev.school_ids, school._id]
+                                : prev.school_ids.filter((id) => id !== school._id),
                             }));
                           }}
                         />
-                        {school}
+                        {school.name}
                       </label>
                     ))
                   ) : (
                     <p className="text-sm text-gray-500">No schools found</p>
                   )}
+
                 </div>
               )}
             </div>

@@ -39,7 +39,7 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
 
         {/* Confirmation Message */}
         <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-          Are you sure you want to delete user <strong className="font-semibold text-red-500">{userName}</strong>? This action is irreversible and will permanently remove the user's data.
+          Are you sure you want to delete user <strong className="font-semibold text-red-500">{userName}?</strong> This action is irreversible and will permanently remove the user's data.
         </p>
 
         {/* Password Input */}
