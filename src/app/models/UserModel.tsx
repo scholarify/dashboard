@@ -8,4 +8,5 @@ export interface UserSchema {
     school_ids: string[];
     isVerified: boolean;
     lastActive: string;
+    password: string;
 }

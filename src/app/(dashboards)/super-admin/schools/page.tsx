@@ -11,9 +11,11 @@ import CircularLoader from "@/components/widgets/CircularLoader";
 import useAuth from "@/app/hooks/useAuth";
 import ProtectedRoute from "@/components/utils/ProtectedRoute";
 import { SchoolCreateSchema, SchoolSchema } from "@/app/models/SchoolModel";
-import { createSchool, getSchools } from "@/app/services/SchoolServices";
+import { createSchool, deleteSchool, getSchools } from "@/app/services/SchoolServices";
 import Link from "next/link";
 import NotificationCard from "@/components/NotificationCard";
+import { verifyPassword } from "@/app/services/UserServices";
+
 
 const BASE_URL = "/super-admin";
 
@@ -23,73 +25,25 @@ const navigation = {
   title: "Schools",
 };
 
-// Interface pour les données des écoles
-interface School {
-  id: string;
-  name: string;
-  email: string;
-  principal: string;
-  creationDate: string;
-  address?: string;
-  website?: string;
-  phoneNumber?: string;
-  description?: string;
-}
 
-// Données d'exemple
-const initSchools: School[] = [
-  {
-    id: "SCH001",
-    name: "Acme High",
-    email: "contact@loremipsum.com",
-    principal: "Michael Jackson",
-    creationDate: "03/12/1989",
-    address: "123 Lorem Ipsum, Birmingham",
-    website: "www.loremipsum.com",
-    phoneNumber: "+44 550 123 4567",
-    description:
-      "We live, our hearts colder. Cause pain is what we go through as we become older. We get insulted by others, lose trust for those others. We get back stabbed by friends. It becomes harder for us to give others a hand.",
-  },
-  {
-    id: "SCH002",
-    name: "Sabadan High",
-    email: "contact@loremipsum.com",
-    principal: "Michael Jackson",
-    creationDate: "03/12/1989",
-    address: "456 Oak St",
-    website: "www.sabadan.com",
-    phoneNumber: "+44 550 987 6543",
-    description: "A great school with a rich history.",
-  },
-  { id: "SCH003", name: "Valley View Academy", email: "contact@loremipsum.com", principal: "Michael Jackson", creationDate: "03/12/1989" },
-  { id: "SCH004", name: "Hilltop College Prep", email: "contact@loremipsum.com", principal: "Michael Jackson", creationDate: "03/12/1989" },
-  { id: "SCH005", name: "Tom Tom Academy", email: "contact@loremipsum.com", principal: "Michael Jackson", creationDate: "03/12/1989" },
-  { id: "SCH006", name: "Sability High College", email: "contact@loremipsum.com", principal: "Michael Jackson", creationDate: "03/12/1989" },
-  { id: "SCH007", name: "IminLove Sketch School", email: "contact@loremipsum.com", principal: "Michael Jackson", creationDate: "03/12/1989" },
-  { id: "SCH008", name: "IminLove Sketch School", email: "contact@loremipsum.com", principal: "Michael Jackson", creationDate: "03/12/1989" },
-  { id: "SCH009", name: "IminLove Sketch School", email: "contact@loremipsum.com", principal: "Michael Jackson", creationDate: "03/12/1989" },
-  { id: "SCH010", name: "IminLove Sketch School", email: "contact@loremipsum.com", principal: "Michael Jackson", creationDate: "03/12/1989" },
-  { id: "SCH011", name: "IminLove Sketch School", email: "contact@loremipsum.com", principal: "Michael Jackson", creationDate: "03/12/1989" },
-];
 
 function SchoolContent() {
   const router = useRouter();
   const [schools, setSchools] = useState<SchoolSchema[]>([]);
   const [loadingData, setLoadingData] = useState(false);
-  // const [schools, setSchools] = useState<SchoolSchema[]>([]);
-
+  const {user} = useAuth();
+  const fetchSchools = async () => {
+    setLoadingData(true);
+    try {
+      const fetchedSchools = await getSchools();
+      setSchools(fetchedSchools);
+    } catch (error) {
+      console.error("Error fetching schools:", error);
+    } finally {
+      setLoadingData(false);
+    }
+  };
   useEffect(() => {
-    const fetchSchools = async () => {
-      setLoadingData(true);
-      try {
-        const fetchedSchools = await getSchools();
-        setSchools(fetchedSchools);
-      } catch (error) {
-        console.error("Error fetching schools:", error);
-      } finally {
-        setLoadingData(false);
-      }
-    };
     fetchSchools();
   }, []);
   const [selectedSchools, setSelectedSchools] = useState<SchoolSchema[]>([]);
@@ -98,7 +52,10 @@ function SchoolContent() {
   const [schoolToDelete, setSchoolToDelete] = useState<SchoolSchema | null>(null); // École à supprimer
   
   const [isNotificationCard, setIsNotificationCard] = useState(false);
-  const [notificationMessage, setNotificationMessage] = useState("");
+  const [notificationCard, setNotificationCard] = useState({
+    message: "",
+    type: "",
+  });
 
   // Colonnes du tableau
   const columns = [
@@ -113,16 +70,36 @@ function SchoolContent() {
   ];
 
   // Gérer la suppression d'une école
-  const handleDelete = (password: string) => {
+  const handleDelete = async (password: string) => {
     // Simuler une vérification de mot de passe (dans un vrai projet, fais une requête API)
-    if (password !== "admin123") {
-      alert("Incorrect password. Please try again.");
+    const passwordVerified = user ? await verifyPassword(password, user.email) : false;
+    console.log("passwordVerified", passwordVerified);
+    if (!passwordVerified) {
+      setNotificationCard({
+        message: "Invalid password. Please try again.",
+        type: "error",
+      });
+      setIsNotificationCard(true);
       return;
     }
-
     if (schoolToDelete) {
-      setSchools(schools.filter((s) => s.school_id !== schoolToDelete.school_id));
-      setSchoolToDelete(null);
+      if (schoolToDelete?.school_id) {
+        const deleted = await deleteSchool(schoolToDelete.school_id);
+        if (deleted) {
+          fetchSchools();
+          setNotificationCard({
+            message: "School deleted successfully",
+            type: "success",
+          });
+          setIsNotificationCard(true);
+        }
+      } else {
+        setNotificationCard({
+          message: "Failed to delete school. Please try again.",
+          type: "error",
+        });
+        setIsNotificationCard(true);
+      }
     }
   };
 
@@ -184,7 +161,10 @@ function SchoolContent() {
           description: data.description,
         };
         setSchools((prev) => [...prev, school]);
-        setNotificationMessage("School created successfully!");
+        setNotificationCard({
+          message: "School created successfully",
+          type: "success",
+        });
         setIsNotificationCard(true);
       }
     } catch (error) {
@@ -211,9 +191,9 @@ function SchoolContent() {
             </svg>
 
           }
-          message={notificationMessage}
+          message={notificationCard.message}
           onClose={() => setIsNotificationCard(false)}
-          type="success"
+          type={notificationCard.type}
           isVisible={isNotificationCard}
           isFixed={true}
         />

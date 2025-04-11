@@ -28,3 +28,23 @@ export async function getCurrentUser(){
         return user;
     }
 }
+
+export async function verifyPassword(password: string, email: string): Promise<boolean> {
+    const response = await fetch(`${BASE_API_URL}/auth/verify-password`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            email: email,
+            password: password,
+        }),
+    });
+
+    if (!response.ok) {
+        console.error("Error fetching user:", response.statusText);
+        return false;
+    }
+
+    return true;
+}
