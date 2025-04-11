@@ -154,7 +154,7 @@ const CreateSchoolModal: React.FC<CreateSchoolProps> = ({ onClose, onSave, initi
               name="description"
               value={formData.description || ""}
               onChange={handleChange}
-              rows={3} 
+              rows={3}
             />
           </div>
 
