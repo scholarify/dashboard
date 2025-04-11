@@ -88,7 +88,7 @@ function SchoolViewDetailContent() {
     }
 
 // Gérer la sauvegarde après modification
-const handleSave = async (schoolData: SchoolSchema) => {
+const handleSave = async (schoolData: SchoolUpdateSchema) => {
     if (school) {
         setLoadingData(true);
         try {
