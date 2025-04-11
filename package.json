@@ -30,6 +30,7 @@
     "@react-stately/datepicker": "^3.13.0",
     "@remixicon/react": "^4.6.0",
     "@tailwindcss/postcss": "^4.0.17",
+    "bcrypt": "^5.1.1",
     "daisyui": "^5.0.9",
     "date-fns": "^3.6.0",
     "framer-motion": "^12.6.2",
@@ -47,6 +48,7 @@
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.10",
+    "@types/bcrypt": "^5.0.2",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^20",
     "@types/react": "^18",

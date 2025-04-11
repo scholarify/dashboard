@@ -129,3 +129,19 @@ export async function updateSchool(schoolId: string, schoolData: SchoolUpdateSch
     const data = await response.json();
     return data;
 }
+
+export async function deleteSchool(schoolId: string) {
+    const response = await fetch(`${BASE_API_URL}/school/delete-school/${schoolId}`, {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getTokenFromCookie("idToken")}`,
+        },
+    });
+    if (!response.ok) {
+        console.error("Error deleting school:", response.statusText);
+        throw new Error("Failed to delete school data");
+    }
+    const data = await response.json();
+    return data;
+}
