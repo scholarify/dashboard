@@ -38,14 +38,24 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false);
 
   useEffect(() => {
-    if (initialData?.phone) {
-      const phone = initialData.phone;
-      const code = (phone ?? "").match(/^\+\d+/)?.[0] || "+237";
-      const number = (phone ?? "").replace(code, "");
+    if (initialData) {
+      const code = initialData.phone?.match(/^\+\d+/)?.[0] || "+237";
+      const number = initialData.phone?.replace(code, "") || "";
+  
+      setFormData({
+        name: initialData.name || "",
+        email: initialData.email || "",
+        password: "", // Optional: leave empty if you don't want to show it during edit
+        role: initialData.role,
+        phone: number,
+        address: initialData.address || "",
+        school_ids: initialData.school_ids || [],
+      });
+  
       setCountryCode(code);
-      setFormData((prev) => ({ ...prev, phone: number }));
     }
   }, [initialData]);
+  
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>

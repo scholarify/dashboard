@@ -169,3 +169,35 @@ export async function getUserById(userId: string) {
     return user;
 }
 
+export async function deleteUser(user_id: string) {
+    try {
+        const response = await fetch(`${BASE_API_URL}/user/delete-user/${user_id}`, {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${getTokenFromCookie("idToken")}`,
+            },
+        });
+
+        if (!response.ok) {
+            let errorMessage = "Failed to delete user";
+
+            try {
+                const errorBody = await response.json();
+                errorMessage = errorBody?.message || errorMessage;
+            } catch (parseError) {
+                console.warn("Could not parse error response:", parseError);
+            }
+
+            console.error("Error deleting user:", errorMessage);
+            throw new Error(errorMessage);
+        }
+
+        const result = await response.json();
+        return result; // Might return a success message or deleted user data
+        
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        throw new Error(error instanceof Error ? error.message : "Failed to delete user");
+    }
+}

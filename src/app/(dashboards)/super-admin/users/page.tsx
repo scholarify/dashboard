@@ -3,13 +3,13 @@
 import SuperLayout from '@/components/Dashboard/Layouts/SuperLayout';
 import CircularLoader from '@/components/widgets/CircularLoader';
 import React, { Suspense, useEffect, useState } from 'react';
-import { School } from 'lucide-react';
+import { School, Users } from 'lucide-react';
 import DataTable from '@/components/utils/DataTable';
 import CreateUserModal from './components/CreateUserModal';
 import { useRouter } from 'next/navigation';
 import DeleteUserModal from './components/DeleteUserModal';
 import { UserCreateSchema, UserSchema } from '@/app/models/UserModel';
-import { createUser, getUsers } from '@/app/services/UserServices';
+import { createUser, deleteUser, getUsers } from '@/app/services/UserServices';
 import NotificationCard from '@/components/NotificationCard';
 import { SchoolSchema } from '@/app/models/SchoolModel';
 import { getSchools } from '@/app/services/SchoolServices';
@@ -19,9 +19,9 @@ export default function Page() {
   const BASE_URL = "/super-admin";
 
   const navigation = {
-    icon: School,
+    icon: Users,
     baseHref: `${BASE_URL}/users`,
-    title: "Schools",
+    title: "Users",
   };
 
   function UserContent() {
@@ -156,16 +156,31 @@ export default function Page() {
 
 
 
-    const handleDelete = (password: string) => {
-      // Simuler une vérification de mot de passe (dans un vrai projet, fais une requête API)
+    const handleDelete = async (password: string) => {
       if (password !== "admin123") {
         alert("Incorrect password. Please try again.");
         return;
       }
 
       if (userToDelete) {
-        setUsers(users.filter((u) => u.id !== userToDelete.id));
-        setUserToDelete(null);
+        try {
+          // Call the API to delete the user from the backend
+          await deleteUser(userToDelete.user_id); // Assuming user_id exists
+
+          // Update the frontend state to reflect the deletion
+          setUsers(users.filter((u) => u.user_id !== userToDelete.user_id));
+
+          setNotificationMessage("User Deleted successfully!");
+          setIsNotificationCard(true);
+          setNotificationType("success");
+          setUserToDelete(null);
+        } catch (error) {
+          console.error("Error deleting user:", error);
+          const errorMessage = error instanceof Error ? error.message : "Error deleting user:";
+          setNotificationMessage(errorMessage);
+          setIsNotificationCard(true);
+          setNotificationType("error");
+        }
       }
     };
     // Gérer la suppression multiple
