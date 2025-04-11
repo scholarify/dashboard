@@ -1,33 +1,17 @@
 "use client";
 
-import { User } from "lucide-react";
+import { School, User } from "lucide-react";
 import SuperLayout from "@/components/Dashboard/Layouts/SuperLayout";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import CreateUserModal from "../components/CreateUserModal";
 import DeleteUserModal from "../components/DeleteUserModal";
 import CircularLoader from "@/components/widgets/CircularLoader";
-
-// User interface
-interface User {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-    phone?: string;
-    address?: string;
-    school?: string;
-    lastLogin?: string;
-    password?: string;
-}
-
-const initialUsers: User[] = [
-    { id: "USR0001", name: "Alice Johnson", email: "alice.johnson@schoolmail.com", role: "Teacher", school: "Greenwood High", lastLogin: "2025-04-07", password: "" },
-    { id: "USR0002", name: "Bob Smith", email: "bob.smith@schoolmail.com", role: "Admin", school: "Oceanview Academy", lastLogin: "2025-04-06", password: "" },
-    { id: "USR0003", name: "Cynthia Lee", email: "cynthia.lee@schoolmail.com", role: "Parent", school: "", lastLogin: "2025-04-05", password: "" },
-    { id: "USR0004", name: "Daniel Kim", email: "daniel.kim@schoolmail.com", role: "Super Admin", school: "Riverdale Institute", lastLogin: "2025-04-03", password: "" },
-    // ... Add remaining users
-];
+import { getUserById, updateUser } from "@/app/services/UserServices";
+import { UserSchema, UserUpdateSchema } from "@/app/models/UserModel";
+import NotificationCard from "@/components/NotificationCard";
+import { SchoolSchema } from "@/app/models/SchoolModel";
+import { getSchools } from "@/app/services/SchoolServices";
 
 const BASE_URL = "/super-admin";
 
@@ -42,28 +26,60 @@ function UserViewDetailContent() {
     const searchParams = useSearchParams();
     const userId = searchParams.get("id");
 
-    const [users, setUsers] = useState<User[]>(initialUsers);
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<UserSchema | null>(null);
+    const [schools, setAllSchools] = useState<SchoolSchema[]>([]); // State to store all schools
+    const [filteredSchools, setFilteredSchools] = useState<SchoolSchema[]>([]); // State to store filtered schools for the user
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const roles = ["All", ...Array.from(new Set(users.map((user) => user.role))).sort()];
+    const [loadingData, setLoadingData] = useState(false);
+    const [isNotificationCard, setIsNotificationCard] = useState(false);
+    const [notificationMessage, setNotificationMessage] = useState("");
+    const [loadingSchools, setLoadingSchools] = useState(true); // New state for loading schools
 
+    // Load user details based on the userId
     useEffect(() => {
-        if (userId) {
-            const foundUser = users.find((u) => u.id === userId);
-            if (foundUser) {
-                setUser(foundUser); // Update user state
-            } else {
-                router.push(`${BASE_URL}/users`);
-            }
-        }
-    }, [userId, users, router]); // Add `users` to the dependencies
+        const fetchData = async () => {
+            try {
+                if (!userId) {
+                    return;
+                }
 
+                // Fetch user details
+                const foundUser = await getUserById(userId);
+                if (foundUser) {
+                    setUser(foundUser);
+                    // Fetch all schools
+                    const schools = await getSchools();
+                    setAllSchools(schools);
+
+                    // Filter the schools based on school_ids of the user, making sure school_ids is defined
+                    const userSchools = schools.filter((school: { _id: string; }) =>
+                        foundUser.school_ids?.includes(school._id) // safe check
+                    );
+                    setFilteredSchools(userSchools);
+                } else {
+                    // Redirect if the user is not found
+                    router.push("/super-admin/users");
+                }
+            } catch (error) {
+                console.error("Error fetching user details:", error);
+            } finally {
+                setLoadingSchools(false); // Set loading to false after schools are loaded
+            }
+        };
+        fetchData();
+    }, [userId, router]);
+
+    console.log("filterd schools found:", filteredSchools)
+
+    // Handle user deletion
     const handleDelete = async (password: string) => {
         try {
             const response = await fetch("/api/verify-password", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                },
                 body: JSON.stringify({ password }),
             });
             const data = await response.json();
@@ -73,7 +89,7 @@ function UserViewDetailContent() {
             }
 
             if (user) {
-                const deleteResponse = await fetch(`/api/users/${user.id}`, {
+                const deleteResponse = await fetch(`/api/users/${user.user_id}`, {
                     method: "DELETE",
                 });
                 if (deleteResponse.ok) {
@@ -88,61 +104,150 @@ function UserViewDetailContent() {
         }
     };
 
-    const handleSave = (userData: any) => {
+    // Handle saving updates to the user
+    const handleSave = async (userData: UserUpdateSchema) => {
         if (user) {
-            const updatedUser: User = {
-                ...user,
-                name: userData.name,
-                email: userData.email,
-                role: userData.role,
-                phone: userData.phone,
-                address: userData.address,
-                school: userData.school,
-            };
-
-            const index = users.findIndex((u) => u.id === user.id);
-            if (index !== -1) {
-                const updatedUsers = [...users];
-                updatedUsers[index] = updatedUser;
-                setUsers(updatedUsers); // Update the users array
-                setUser(updatedUser); // Update the user state
+            setLoadingData(true);
+            try {
+                const updatedUser: UserUpdateSchema = {
+                    user_id: user.user_id,
+                    name: userData.name,
+                    email: userData.email,
+                    role: userData.role,
+                    phone: userData.phone,
+                    address: userData.address,
+                    school_ids: userData.school_ids,
+                    isVerified: userData.isVerified,
+                };
+                if (userData.user_id) {
+                    const data = await updateUser(userData.user_id, updatedUser);
+                    if (data) {
+                        setUser(data);
+                        setIsNotificationCard(true);
+                        setNotificationMessage("User updated successfully.");
+                    }
+                } else {
+                    console.error("User ID is undefined. Cannot update user.");
+                }
+            } catch (error) {
+                console.error("Error updating user:", error);
+            } finally {
+                setLoadingData(false);
+                setIsEditModalOpen(false); // Close modal after saving
             }
         }
     };
 
     if (!user) {
-        return (
-            <div className="flex justify-center items-center h-screen w-full absolute top-0 left-0 z-50">
-                <CircularLoader size={32} color="teal" />
-            </div>
-        );
+        return <div className="flex justify-center items-center h-screen w-full absolute top-0 left-0 z-50">
+            <CircularLoader size={32} color="teal" />
+        </div>;
+    }
+
+    if (loadingData) {
+        return <div className="flex justify-center items-center h-screen w-full absolute top-0 left-0 z-50">
+            <CircularLoader size={32} color="teal" />
+        </div>;
     }
 
     return (
         <div>
+            {isNotificationCard && (
+                <NotificationCard
+                    title="Notification"
+                    icon={
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z" stroke="#15803d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M7.75 11.9999L10.58 14.8299L16.25 9.16992" stroke="#15803d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                    }
+                    message={notificationMessage}
+                    onClose={() => setIsNotificationCard(false)}
+                    type="success"
+                    isVisible={isNotificationCard}
+                    isFixed={true}
+                />
+            )}
+
             <div className="md:p-6">
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                    <h1 className="text-2xl font-bold text-foreground mb-4">{user.name} Details</h1>
+                    {/* Title */}
+                    <h1 className="text-2xl font-bold text-foreground mb-4">
+                        {user.name} Details
+                    </h1>
 
+                    {/* User Information Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                        <InfoBox label="User ID" value={user.id} />
-                        <InfoBox label="Name" value={user.name} />
-                        <InfoBox label="Email" value={user.email} />
-                        <InfoBox label="Role" value={user.role} />
-                        <InfoBox label="Phone" value={user.phone || "N/A"} />
-                        <InfoBox label="Address" value={user.address || "N/A"} />
-                        <InfoBox label="School" value={user.school || "N/A"} />
+                        {/* User ID */}
+                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                            <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                                User ID
+                            </p>
+                            <p className="text-sm text-foreground">{user.user_id}</p>
+                        </div>
+
+                        {/* User Role */}
+                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                            <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                                Role
+                            </p>
+                            <p className="text-sm text-foreground">{user.role}</p>
+                        </div>
+
+                        {/* Name */}
+                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                            <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                                Name
+                            </p>
+                            <p className="text-sm text-foreground">{user.name}</p>
+                        </div>
+
+                        {/* Email */}
+                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                            <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                                Email
+                            </p>
+                            <p className="text-sm text-foreground">{user.email}</p>
+                        </div>
+
+                        {/* Phone Number */}
+                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md h-fit">
+                            <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                                Phone Number
+                            </p>
+                            <p className="text-sm text-foreground">{user.phone || "N/A"}</p>
+                        </div>
+
+                        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
+                            <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">Assigned Schools</p>
+                            {loadingSchools ? (
+                                <div className="flex justify-center items-center">
+                                    <CircularLoader size={32} color="teal" />
+                                </div>
+                            ) : (
+                                <ul className="list-disc list-inside text-sm text-foreground mt-1">
+                                    {filteredSchools.length > 0 ? (
+                                        filteredSchools.map(school => (
+                                            <li key={school.school_id}>{school.name}</li>
+                                        ))
+                                    ) : (
+                                        <li>No schools assigned.</li>
+                                    )}
+                                </ul>
+                            )}
+                        </div>
                     </div>
 
+                    {/* Buttons */}
                     <div className="flex justify-end space-x-2">
                         <button
                             onClick={() => setIsEditModalOpen(true)}
-                            className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600"
+                            className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal"
                         >
                             Edit User
                         </button>
                         <button
-                            onClick={() => setIsDeleteModalOpen(true)}
+                            onClick={() => setIsDeleteModalOpen(true)} // Open delete modal
                             className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
                         >
                             Delete User
@@ -151,24 +256,23 @@ function UserViewDetailContent() {
                 </div>
             </div>
 
+            {/* Edit Modal */}
             {isEditModalOpen && (
                 <CreateUserModal
                     onClose={() => setIsEditModalOpen(false)}
                     onSave={handleSave}
                     initialData={{
+                        user_id: user.user_id,
                         name: user.name,
-                        email: user.email,
-                        role: user.role,
+                        email: user.email || "",
                         phone: user.phone || "",
+                        role: user.role,
                         address: user.address || "",
-                        school: Array.isArray(user.school) ? user.school : [user.school || ""],
-                        password: "",
-                    }}
-                    roles={roles.filter((role) => role !== "All")}
-                    schools={["Greenwood High", "Oceanview Academy", "Hilltop School", "Riverdale Institute"]}
-                />
+                        school_ids: user.school_ids || [],
+                    }} roles={[]} schools={[]} />
             )}
 
+            {/* Delete Modal */}
             {isDeleteModalOpen && (
                 <DeleteUserModal
                     userName={user.name}
@@ -180,15 +284,6 @@ function UserViewDetailContent() {
     );
 }
 
-function InfoBox({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
-            <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">{label}</p>
-            <p className="text-sm text-foreground">{value}</p>
-        </div>
-    );
-}
-
 export default function UserViewDetail() {
     return (
         <SuperLayout
@@ -196,13 +291,13 @@ export default function UserViewDetail() {
             showGoPro={true}
             onLogout={() => console.log("Logged out")}
         >
-            <Suspense
-                fallback={
+            <Suspense fallback={
+                <div>
                     <div className="flex justify-center items-center h-screen absolute top-0 left-0 z-50">
                         <CircularLoader size={32} color="teal" />
                     </div>
-                }
-            >
+                </div>
+            }>
                 <UserViewDetailContent />
             </Suspense>
         </SuperLayout>

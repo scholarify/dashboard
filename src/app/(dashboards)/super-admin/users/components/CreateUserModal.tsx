@@ -168,7 +168,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
               >
                 <span>
                   {formData.school_ids && formData.school_ids.length > 0
-                    ? filteredSchools
+                    ? schools
                       .filter((school) => formData.school_ids.includes(school._id))
                       .map((school) => school.name)
                       .join(", ")

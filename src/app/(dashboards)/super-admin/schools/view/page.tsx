@@ -88,7 +88,7 @@ function SchoolViewDetailContent() {
     };
 
     // Gérer la sauvegarde après modification
-    const handleSave = async (schoolData: SchoolSchema) => {
+    const handleSave = async (schoolData: SchoolUpdateSchema) => {
         if (school) {
             setLoadingData(true);
             try {
@@ -97,7 +97,7 @@ function SchoolViewDetailContent() {
                     name: schoolData.name,
                     email: schoolData.email,
                     principal_name: schoolData.principal_name,
-                    established_year: school.established_year,
+                    established_year: schoolData.established_year,
                     address: schoolData.address,
                     website: schoolData.website,
                     phone_numer: schoolData.phone_numer,

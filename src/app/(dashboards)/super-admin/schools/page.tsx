@@ -174,6 +174,7 @@ function SchoolContent() {
       const data = await createSchool(newSchool);
       if (data) {
         const school: SchoolSchema = {
+          _id:data._id,
           school_id: data.school_id,
           name: data.name,
           email: data.email,

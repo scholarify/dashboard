@@ -13,6 +13,7 @@ import { createUser, getUsers } from '@/app/services/UserServices';
 import NotificationCard from '@/components/NotificationCard';
 import { SchoolSchema } from '@/app/models/SchoolModel';
 import { getSchools } from '@/app/services/SchoolServices';
+import Link from 'next/link';
 
 export default function Page() {
   const BASE_URL = "/super-admin";
@@ -27,7 +28,7 @@ export default function Page() {
     const router = useRouter();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedRole, setSelectedRole] = useState("All");
-    const [selectedUsers, setSelectedUsers] = useState<UserSchema[]>([]);    
+    const [selectedUsers, setSelectedUsers] = useState<UserSchema[]>([]);
     const [users, setUsers] = useState<UserSchema[]>([]);
     const [schools, setSchools] = useState<SchoolSchema[]>([]);
     const [userToDelete, setUserToDelete] = useState<UserSchema | null>(null);
@@ -35,43 +36,44 @@ export default function Page() {
     const [loadingData, setLoadingData] = useState(false);
     const [isNotificationCard, setIsNotificationCard] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState("");
+    const [notificationType, setNotificationType] = useState("success")
 
-  useEffect(() => {
-    const fetchSchools = async () => {
-      setLoadingData(true);
-      try {
-        const fetchedUsers = await getUsers();
-        const fetchedSchools = await getSchools();
-        setSchools(fetchedSchools);        
-        setUsers(fetchedUsers);
-      } catch (error) {
-        console.error("Error fetching schools or User:", error);
-      } finally {
-        setLoadingData(false);
-      }
-    };
-    fetchSchools();
-  }, []);
-//console.log(schools)
-// Create a mapping from school_id to school name
-const schoolNameMap: { [key: string]: string } = schools.reduce((map, school) => {
-  map[school._id] = school.name;
-  return map;
-}, {} as { [key: string]: string });
+    useEffect(() => {
+      const fetchSchools = async () => {
+        setLoadingData(true);
+        try {
+          const fetchedUsers = await getUsers();
+          const fetchedSchools = await getSchools();
+          setSchools(fetchedSchools);
+          setUsers(fetchedUsers);
+        } catch (error) {
+          console.error("Error fetching schools or User:", error);
+        } finally {
+          setLoadingData(false);
+        }
+      };
+      fetchSchools();
+    }, []);
+    //console.log(schools)
+    // Create a mapping from school_id to school name
+    const schoolNameMap: { [key: string]: string } = schools.reduce((map, school) => {
+      map[school._id] = school.name;
+      return map;
+    }, {} as { [key: string]: string });
 
-    const columns=[
+    const columns = [
       { header: "User ID", accessor: (row: UserSchema) => row.user_id },
-      { header: "Name", accessor: (row: UserSchema) => row.name },
+      { header: "Name", accessor: (row: UserSchema) => { return <Link href={`${BASE_URL}/users/view?id=${row.user_id}`}>{row.name}</Link>; } },
       { header: "Email", accessor: (row: UserSchema) => row.email },
       { header: "Role", accessor: (row: UserSchema) => row.role },
       {
         header: "School",
-        accessor: (row: UserSchema) => 
+        accessor: (row: UserSchema) =>
           (row.school_ids ?? []).map(id => schoolNameMap[id] || "Unknown School").join(", "), // Added fallback for unknown school IDs
       },
       { header: "Last Login", accessor: (row: UserSchema) => row.lastActive },
     ]
-    const actions =[
+    const actions = [
       {
         label: "View",
         onClick: (user: UserSchema) => {
@@ -86,7 +88,7 @@ const schoolNameMap: { [key: string]: string } = schools.reduce((map, school) =>
         },
       },
     ]
-  
+
     const roles = ["All", ...Array.from(new Set(users.map(user => user.role))).sort()];
 
     const filteredUsers = selectedRole === "All"
@@ -109,7 +111,7 @@ const schoolNameMap: { [key: string]: string } = schools.reduce((map, school) =>
 
         // Make the API call to create the user
         const data = await createUser(newUser);
-        console.log("fired save button:",data);
+
 
         if (data) {
           // Assuming 'data' contains the newly created user, so we use it directly
@@ -135,12 +137,16 @@ const schoolNameMap: { [key: string]: string } = schools.reduce((map, school) =>
           // Display success message
           setNotificationMessage("User created successfully!");
           setIsNotificationCard(true);
+          setNotificationType("success");
         }
       } catch (error) {
         console.error("Error creating user:", error);
-        // Optionally, set an error notification
-        setNotificationMessage("Failed to create user. Please try again.");
+
+        // Capture the error message from the error object or use a default one
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred while creating the user.";
+        setNotificationMessage(errorMessage);
         setIsNotificationCard(true);
+        setNotificationType("error");
       } finally {
         setLoadingData(false); // Reset loading state
         // Optionally close the modal after the operation is complete
@@ -162,17 +168,17 @@ const schoolNameMap: { [key: string]: string } = schools.reduce((map, school) =>
         setUserToDelete(null);
       }
     };
-  // Gérer la suppression multiple
-  const handleDeleteSelected = () => {
-    if (selectedUsers.length === 0) {
-      alert("Please select at least one school to delete.");
-      return;
-    }
-    if (confirm(`Are you sure you want to delete ${selectedUsers.length} school(s)?`)) {
-      setUsers(users.filter((user) => !selectedUsers.includes(user)));
-      setSelectedUsers([]); // Réinitialiser la sélection après suppression
-    }
-  };
+    // Gérer la suppression multiple
+    const handleDeleteSelected = () => {
+      if (selectedUsers.length === 0) {
+        alert("Please select at least one school to delete.");
+        return;
+      }
+      if (confirm(`Are you sure you want to delete ${selectedUsers.length} school(s)?`)) {
+        setUsers(users.filter((user) => !selectedUsers.includes(user)));
+        setSelectedUsers([]); // Réinitialiser la sélection après suppression
+      }
+    };
 
     return (
       <div className="md:p-6">
@@ -188,7 +194,7 @@ const schoolNameMap: { [key: string]: string } = schools.reduce((map, school) =>
             }
             message={notificationMessage}
             onClose={() => setIsNotificationCard(false)}
-            type="success"
+            type={notificationType}
             isVisible={isNotificationCard}
             isFixed={true}
           />
