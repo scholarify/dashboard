@@ -1,13 +1,13 @@
 "use client";
 
-import { School, User } from "lucide-react";
+import { Users } from "lucide-react";
 import SuperLayout from "@/components/Dashboard/Layouts/SuperLayout";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import CreateUserModal from "../components/CreateUserModal";
 import DeleteUserModal from "../components/DeleteUserModal";
 import CircularLoader from "@/components/widgets/CircularLoader";
-import { getUserById, updateUser } from "@/app/services/UserServices";
+import { deleteUser, getUserById, updateUser } from "@/app/services/UserServices";
 import { UserSchema, UserUpdateSchema } from "@/app/models/UserModel";
 import NotificationCard from "@/components/NotificationCard";
 import { SchoolSchema } from "@/app/models/SchoolModel";
@@ -16,7 +16,7 @@ import { getSchools } from "@/app/services/SchoolServices";
 const BASE_URL = "/super-admin";
 
 const navigation = {
-    icon: User,
+    icon: Users,
     baseHref: `${BASE_URL}/users`,
     title: "User Details",
 };
@@ -34,7 +34,11 @@ function UserViewDetailContent() {
     const [loadingData, setLoadingData] = useState(false);
     const [isNotificationCard, setIsNotificationCard] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState("");
+
+    const [notificationType, setNotificationType] = useState("success")
     const [loadingSchools, setLoadingSchools] = useState(true); // New state for loading schools
+    const [users, setUsers] = useState<UserSchema[]>([]);
+    const roles = ["admin", "teacher", "student","super"];
 
     // Load user details based on the userId
     useEffect(() => {
@@ -70,37 +74,36 @@ function UserViewDetailContent() {
         fetchData();
     }, [userId, router]);
 
-    console.log("filterd schools found:", filteredSchools)
+    // console.log("filterd schools found:", filteredSchools)
 
     // Handle user deletion
-    const handleDelete = async (password: string) => {
-        try {
-            const response = await fetch("/api/verify-password", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ password }),
-            });
-            const data = await response.json();
-            if (!data.isValid) {
-                alert("Incorrect password. Please try again.");
-                return;
-            }
 
-            if (user) {
-                const deleteResponse = await fetch(`/api/users/${user.user_id}`, {
-                    method: "DELETE",
-                });
-                if (deleteResponse.ok) {
-                    router.push(`${BASE_URL}/users`);
-                } else {
-                    alert("Failed to delete user. Please try again.");
-                }
+    const handleDelete = async (password: string) => {
+        if (password !== "admin123") {
+            alert("Incorrect password. Please try again.");
+            return;
+        }
+
+        if (user) {
+            try {
+                // Call the API to delete the user from the backend
+                await deleteUser(user.user_id); // Assuming user_id exists
+
+                // Update the frontend state to reflect the deletion
+                setUsers(users.filter((u) => u.user_id !== user.user_id));
+
+                setNotificationMessage("User Deleted successfully!");
+                setIsNotificationCard(true);
+                setNotificationType("success");
+                router.push("/super-admin/users");
+
+            } catch (error) {
+                console.error("Error deleting user:", error);
+                const errorMessage = error instanceof Error ? error.message : "Error deleting user:";
+                setNotificationMessage(errorMessage);
+                setIsNotificationCard(true);
+                setNotificationType("error");
             }
-        } catch (error) {
-            console.error("Error deleting user:", error);
-            alert("An error occurred. Please try again.");
         }
     };
 
@@ -163,7 +166,7 @@ function UserViewDetailContent() {
                     }
                     message={notificationMessage}
                     onClose={() => setIsNotificationCard(false)}
-                    type="success"
+                    type={notificationType}
                     isVisible={isNotificationCard}
                     isFixed={true}
                 />
@@ -269,7 +272,11 @@ function UserViewDetailContent() {
                         role: user.role,
                         address: user.address || "",
                         school_ids: user.school_ids || [],
-                    }} roles={[]} schools={[]} />
+                    }}
+                    roles={roles} 
+                    schools={schools} 
+                />
+
             )}
 
             {/* Delete Modal */}
