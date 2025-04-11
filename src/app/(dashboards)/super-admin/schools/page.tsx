@@ -124,13 +124,23 @@ function SchoolContent() {
   // Gérer la suppression multiple
   const handleDeleteSelected = () => {
     if (selectedSchools.length === 0) {
-      alert("Please select at least one school to delete.");
-      return;
-    }
-    if (confirm(`Are you sure you want to delete ${selectedSchools.length} school(s)?`)) {
-      setSchools(schools.filter((school) => !selectedSchools.includes(school)));
-      setSelectedSchools([]); // Réinitialiser la sélection après suppression
-    }
+    alert("Please select at least one school to delete.");
+    return;
+  }
+
+  // Récupérer les clés des lignes sélectionnées depuis le bouton
+  const deleteButton = document.querySelector("[data-remove-items-id]");
+  const keysToDelete = deleteButton?.getAttribute("data-remove-items-id")?.split(",") || [];
+
+  if (confirm(`Are you sure you want to delete ${selectedSchools.length} school(s)?`)) {
+    // Filtrer les écoles en utilisant les clés
+    const newSchools = schools.filter((school, index) => {
+      const key = school.id ? String(school.id) : `row-${index}`;
+      return !keysToDelete.includes(key);
+    });
+    setSchools(newSchools);
+    setSelectedSchools([]);
+  }
   };
 
   // Gérer l'ajout d'une nouvelle école

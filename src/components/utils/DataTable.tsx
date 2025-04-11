@@ -38,21 +38,22 @@ const DataTable = <T extends Record<string, unknown>>({
   onLoadingChange = () => {},
   onSelectionChange,
 }: DataTableProps<T>) => {
-  const [isLoading, setIsLoading] = useState(false); // État pour le chargement
-  // État pour la pagination
+  const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  // État pour le nombre d'éléments par page
   const [itemsPerPage, setItemsPerPage] = useState<number | "All">(defaultItemsPerPage);
-  // État pour les lignes sélectionnées
   const [selectedRows, setSelectedRows] = useState<T[]>([]);
-  // État pour le terme de recherche
   const [searchTerm, setSearchTerm] = useState<string>("");
 
-  // Options pour le sélecteur (5, 10, 15, 20, All)
   const itemsPerPageOptions = [5, 10, 15, 20, "All"];
 
+  // Ajouter une clé unique à chaque ligne pour l'identifier
+  const dataWithKeys = data.map((row, index) => ({
+    row,
+    key: (row as any).id ?? `row-${index}`, // Utiliser row.id si disponible, sinon générer une clé unique
+  }));
+
   // Filtrer les données en fonction du terme de recherche
-  const filteredData = data.filter((row) =>
+  const filteredData = dataWithKeys.filter(({ row }) =>
     columns.some((column) => {
       const value =
         typeof column.accessor === "function"
@@ -94,8 +95,9 @@ const DataTable = <T extends Record<string, unknown>>({
       setSelectedRows([]);
       onSelectionChange?.([]);
     } else {
-      setSelectedRows(filteredData);
-      onSelectionChange?.(filteredData);
+      const allRows = filteredData.map(({ row }) => row);
+      setSelectedRows(allRows);
+      onSelectionChange?.(allRows);
     }
   };
 
@@ -119,16 +121,16 @@ const DataTable = <T extends Record<string, unknown>>({
   const handleItemsPerPageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
     setItemsPerPage(value === "All" ? "All" : Number(value));
-    setCurrentPage(1); // Réinitialiser à la première page lors du changement
+    setCurrentPage(1);
   };
 
   // Gérer la recherche
   const handleSearch = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
-      setCurrentPage(1); // Réinitialiser à la première page lors d'une nouvelle recherche
-      setIsLoading(true); // Afficher le loader pendant la recherche
+      setCurrentPage(1);
+      setIsLoading(true);
       setTimeout(() => {
-        setIsLoading(false); // Masquer le loader après la recherche
+        setIsLoading(false);
       }, 1000);
     }
   };
@@ -145,22 +147,26 @@ const DataTable = <T extends Record<string, unknown>>({
     setCurrentPage(1);
   };
 
-  // Générer le texte et les IDs pour le bouton de suppression
+  // Générer le texte et les clés pour le bouton de suppression
   const getDeleteButtonProps = () => {
     if (selectedRows.length === 0) {
-      return { text: "", ids: "" };
+      return { text: "", keys: "" };
     }
-    const ids = selectedRows.map((row) => row.id).join(",");
+    // Récupérer les clés des lignes sélectionnées
+    const selectedKeys = filteredData
+      .filter(({ row }) => selectedRows.includes(row))
+      .map(({ key }) => key)
+      .join(",");
     if (selectedRows.length === filteredData.length) {
-      return { text: "Supprimer tout", ids };
+      return { text: "Supprimer tout", keys: selectedKeys };
     }
     if (selectedRows.length === 1) {
-      return { text: "Supprimer", ids };
+      return { text: "Supprimer", keys: selectedKeys };
     }
-    return { text: `Supprimer (${selectedRows.length})`, ids };
+    return { text: `Supprimer (${selectedRows.length})`, keys: selectedKeys };
   };
 
-  const { text: deleteButtonText, ids: deleteButtonIds } = getDeleteButtonProps();
+  const { text: deleteButtonText, keys: deleteButtonKeys } = getDeleteButtonProps();
 
   // Fonction pour mapper les actions aux icônes
   const getActionIcon = (action: Action<T>, row: T) => {
@@ -207,7 +213,7 @@ const DataTable = <T extends Record<string, unknown>>({
         <div className="mb-4">
           <button
             className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-            data-remove-items-id={deleteButtonIds}
+            data-remove-items-id={deleteButtonKeys} // Utiliser les clés au lieu des IDs
           >
             {deleteButtonText}
           </button>
@@ -272,10 +278,9 @@ const DataTable = <T extends Record<string, unknown>>({
         <div className="w-full flex flex-col">
           {/* Tableau avec défilement */}
           <div className="max-h-[400px] overflow-y-auto">
-            <table className=" w-max table-auto border-collapse">
+            <table className="w-max table-auto border-collapse">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-800 text-left text-sm font-semibold text-foreground p-3">
-                  {/* Case à cocher pour tout sélectionner */}
                   <th className="px-4 py-3 w-12">
                     <input
                       type="checkbox"
@@ -295,63 +300,60 @@ const DataTable = <T extends Record<string, unknown>>({
                 </tr>
               </thead>
               <tbody>
-                {
-                  loading ? (
-                    <tr>
-                      <td colSpan={columns.length + (actions.length > 0 ? 1 : 0) + 1} className="px-4 py-3 text-center">
-                        <CircularLoader size={24} color="teal" />
+                {loading ? (
+                  <tr>
+                    <td colSpan={columns.length + (actions.length > 0 ? 1 : 0) + 1} className="px-4 py-3 text-center">
+                      <CircularLoader size={24} color="teal" />
+                    </td>
+                  </tr>
+                ) : currentData.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={columns.length + (actions.length > 0 ? 1 : 0) + 1}
+                      className="px-4 py-3 text-center text-gray-500"
+                    >
+                      No data available
+                    </td>
+                  </tr>
+                ) : (
+                  currentData.map(({ row, key }, rowIndex) => (
+                    <tr
+                      key={key} // Utiliser la clé unique pour chaque ligne
+                      className={`border-t border-gray-200 transition-colors duration-200 w-max ${
+                        selectedRows.includes(row)
+                          ? "bg-gray-50 dark:bg-gray-700 border-l-4 border-l-teal"
+                          : "hover:bg-gray-50 dark:hover:bg-gray-700"
+                      }`}
+                    >
+                      <td className="px-4 py-3 w-12">
+                        <input
+                          type="checkbox"
+                          checked={selectedRows.includes(row)}
+                          onChange={() => handleRowSelection(row)}
+                          className="h-4 w-4 text-teal border-gray-300 rounded cursor-pointer"
+                        />
                       </td>
-                    </tr>
-                  ) : currentData.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={columns.length + (actions.length > 0 ? 1 : 0) + 1}
-                        className="px-4 py-3 text-center text-gray-500"
-                      >
-                        No data available
-                      </td>
-                    </tr>
-                  ) : (
-                    currentData.map((row, rowIndex) => (
-                      <tr
-                        key={rowIndex}
-                        className={`border-t border-gray-200 transition-colors duration-200 w-max ${
-                          selectedRows.includes(row)
-                            ? "bg-gray-50 dark:bg-gray-700 border-l-4 border-l-teal"
-                            : "hover:bg-gray-50 dark:hover:bg-gray-700"
-                        }`}
-                      >
-                        {/* Case à cocher pour chaque ligne */}
-                        <td className="px-4 py-3 w-12">
-                          <input
-                            type="checkbox"
-                            checked={selectedRows.includes(row)}
-                            onChange={() => handleRowSelection(row)}
-                            className="h-4 w-4 text-teal border-gray-300 rounded cursor-pointer"
-                          />
+                      {columns.map((column, colIndex) => (
+                        <td key={colIndex} className="px-4 py-3 text-sm text-foreground">
+                          {typeof column.accessor === "function"
+                            ? column.accessor(row)
+                            : row[column.accessor] as React.ReactNode}
                         </td>
-                        {columns.map((column, colIndex) => (
-                          <td key={colIndex} className="px-4 py-3 text-sm text-foreground">
-                            {typeof column.accessor === "function"
-                              ? column.accessor(row)
-                              : row[column.accessor] as React.ReactNode}
-                          </td>
-                        ))}
-                        {actions.length > 0 && (
-                          <td className="px-4 py-3 text-right w-32">
-                            <div className="flex justify-end space-x-2">
-                              {actions.map((action, actionIndex) => (
-                                <React.Fragment key={actionIndex}>
-                                  {getActionIcon(action, row)}
-                                </React.Fragment>
-                              ))}
-                            </div>
-                          </td>
-                        )}
-                      </tr>
-                    ))
-                  )
-                }
+                      ))}
+                      {actions.length > 0 && (
+                        <td className="px-4 py-3 text-right w-32">
+                          <div className="flex justify-end space-x-2">
+                            {actions.map((action, actionIndex) => (
+                              <React.Fragment key={actionIndex}>
+                                {getActionIcon(action, row)}
+                              </React.Fragment>
+                            ))}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -359,12 +361,9 @@ const DataTable = <T extends Record<string, unknown>>({
           {/* Pagination */}
           {filteredData.length > 0 && (
             <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 dark:bg-gray-800 dark:text-foreground">
-              {/* Informations de pagination (Page X of Y) */}
               <div className="hidden lg:block text-sm text-gray-600 dark:text-gray-400">
                 Page {currentPage} of {totalPages}
               </div>
-
-              {/* Sélecteur pour le nombre d'éléments par page */}
               <div className="flex items-center space-x-2">
                 <label htmlFor="itemsPerPage" className="hidden md:block text-sm text-gray-600 dark:text-gray-400">
                   Items per page
@@ -382,8 +381,6 @@ const DataTable = <T extends Record<string, unknown>>({
                   ))}
                 </select>
               </div>
-
-              {/* Boutons de navigation */}
               <div className="flex max-sm:justify-between max-sm:w-full space-x-2">
                 <button
                   onClick={goToPreviousPage}
