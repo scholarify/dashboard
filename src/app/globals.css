@@ -41,3 +41,25 @@ body {
     text-wrap: balance;
   }
 }
+
+/* Thin scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: teal #e5e7eb; /* thumb color, track color */
+}
+
+/* For WebKit (Chrome, Edge) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: teal;
+  border-radius: 10px;
+  border: 2px solid #e5e7eb;
+}

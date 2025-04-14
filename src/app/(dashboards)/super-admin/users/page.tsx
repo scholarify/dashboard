@@ -9,11 +9,13 @@ import CreateUserModal from './components/CreateUserModal';
 import { useRouter } from 'next/navigation';
 import DeleteUserModal from './components/DeleteUserModal';
 import { UserCreateSchema, UserSchema } from '@/app/models/UserModel';
-import { createUser, deleteUser, getUsers } from '@/app/services/UserServices';
+import { createUser, deleteUser, getUsers, verifyPassword } from '@/app/services/UserServices';
 import NotificationCard from '@/components/NotificationCard';
 import { SchoolSchema } from '@/app/models/SchoolModel';
 import { getSchools } from '@/app/services/SchoolServices';
 import Link from 'next/link';
+import useAuth from '@/app/hooks/useAuth';
+import DataTableFix from '@/components/utils/TableFix';
 
 export default function Page() {
   const BASE_URL = "/super-admin";
@@ -37,6 +39,9 @@ export default function Page() {
     const [isNotificationCard, setIsNotificationCard] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState("");
     const [notificationType, setNotificationType] = useState("success")
+    const {user} = useAuth();
+
+    console.log("array of selected users:",selectedUsers)
 
     useEffect(() => {
       const fetchSchools = async () => {
@@ -66,12 +71,19 @@ export default function Page() {
       { header: "Name", accessor: (row: UserSchema) => { return <Link href={`${BASE_URL}/users/view?id=${row.user_id}`}>{row.name}</Link>; } },
       { header: "Email", accessor: (row: UserSchema) => row.email },
       { header: "Role", accessor: (row: UserSchema) => row.role },
+
       {
         header: "School",
         accessor: (row: UserSchema) =>
           (row.school_ids ?? []).map(id => schoolNameMap[id] || "Unknown School").join(", "), // Added fallback for unknown school IDs
       },
-      { header: "Last Login", accessor: (row: UserSchema) => row.lastActive },
+      {
+        header: "Last Login",
+        accessor: (row: UserSchema) => {
+          const date = new Date(row.lastActive || "No data");
+          return date.toLocaleString();  // Returns a human-readable date format
+        }
+      }
     ]
     const actions = [
       {
@@ -116,6 +128,7 @@ export default function Page() {
         if (data) {
           // Assuming 'data' contains the newly created user, so we use it directly
           const createdUser: UserSchema = {
+            _id:data._id,
             user_id: data.user_id,  // Example: Assuming the response has a `user_id`
             firebaseUid: data.firebaseUid,
             name: data.name,
@@ -157,8 +170,12 @@ export default function Page() {
 
 
     const handleDelete = async (password: string) => {
-      if (password !== "admin123") {
-        alert("Incorrect password. Please try again.");
+      const passwordVerified = user ? await verifyPassword(password, user.email) : false;
+      //console.log("passwordVerified", passwordVerified);
+      if (!passwordVerified) {
+        setNotificationMessage("Invalid Password!");
+        setNotificationType("error");
+        setIsNotificationCard(true);
         return;
       }
 
@@ -256,7 +273,7 @@ export default function Page() {
           </select>
         </div>
 
-        <DataTable
+        <DataTableFix
           columns={columns}
           data={filteredUsers}
           actions={actions}

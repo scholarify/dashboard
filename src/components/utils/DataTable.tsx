@@ -220,7 +220,7 @@ const DataTable = <T extends Record<string, unknown>>({
         </div>
       )}
 
-      <div className="max-w-max w-full rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col">
+      <div className="w-full rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col">
         {/* Zone de recherche */}
         {hasSearch && (
           <div className="p-4">

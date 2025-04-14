@@ -49,6 +49,7 @@ export async function getUsers() {
         const usersList = await response.json();
         const users = usersList.map((user: any) => {
             return {
+                _id:user._id,
                 user_id: user.user_id,
                 firebaseUid: user.firebaseUid,
                 name: user.name,
@@ -152,6 +153,7 @@ export async function getUserById(userId: string) {
     const data = await response.json();
 
     const user = {
+        _id:data._id,
         user_id: data.user_id,
         name: data.name,
         email: data.email,
@@ -187,7 +189,9 @@ export async function verifyPassword(password: string, email: string): Promise<b
     }
 
     return true;
-}export async function deleteUser(user_id: string) {
+}
+
+export async function deleteUser(user_id: string) {
     try {
         const response = await fetch(`${BASE_API_URL}/user/delete-user/${user_id}`, {
             method: "DELETE",
