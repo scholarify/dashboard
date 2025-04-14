@@ -12,6 +12,7 @@ import { UserSchema, UserUpdateSchema } from "@/app/models/UserModel";
 import NotificationCard from "@/components/NotificationCard";
 import { SchoolSchema } from "@/app/models/SchoolModel";
 import { getSchools } from "@/app/services/SchoolServices";
+import UpdateUserModal from "../components/UpdateUserModal";
 
 const BASE_URL = "/super-admin";
 
@@ -133,7 +134,11 @@ function UserViewDetailContent() {
                     console.error("User ID is undefined. Cannot update user.");
                 }
             } catch (error) {
-                console.error("Error updating user:", error);
+                //console.error("Error updating user:", error);
+                const errorMessage = error instanceof Error ? error.message : "Error updating user:";
+                setNotificationMessage(errorMessage);
+                setIsNotificationCard(true);
+                setNotificationType("error");
             } finally {
                 setLoadingData(false);
                 setIsEditModalOpen(false); // Close modal after saving
@@ -261,7 +266,7 @@ function UserViewDetailContent() {
 
             {/* Edit Modal */}
             {isEditModalOpen && (
-                <CreateUserModal
+                <UpdateUserModal
                     onClose={() => setIsEditModalOpen(false)}
                     onSave={handleSave}
                     initialData={{
@@ -269,6 +274,7 @@ function UserViewDetailContent() {
                         name: user.name,
                         email: user.email || "",
                         phone: user.phone || "",
+                        password: user.password || "",
                         role: user.role,
                         address: user.address || "",
                         school_ids: user.school_ids || [],

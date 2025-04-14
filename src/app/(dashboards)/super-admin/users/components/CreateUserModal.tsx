@@ -13,7 +13,7 @@ interface CreateUserModalProps {
   onSave: (userData: UserCreateSchema) => void;
   roles: string[];
   schools: SchoolSchema[];  // Updated to handle school_id and name
-  initialData?: UserSchema;
+  initialData?: UserCreateSchema;
 }
 
 const CreateUserModal: React.FC<CreateUserModalProps> = ({
@@ -39,13 +39,18 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
   useEffect(() => {
     if (initialData) {
-      const code = initialData.phone?.match(/^\+\d+/)?.[0] || "+237";
-      const number = initialData.phone?.replace(code, "") || "";
+      const rawPhone = initialData.phone?.replace(/\s|-/g, "") || "";
+      const code = rawPhone.match(/^\+\d{1,3}/)?.[0] || "+237";
+      const number = rawPhone.replace(code, "");
+  
+      console.log("Initial Data:", initialData); 
+      console.log("Parsed countryCode:", code); 
+      console.log("Parsed number:", number); 
   
       setFormData({
         name: initialData.name || "",
         email: initialData.email || "",
-        password: "", // Optional: leave empty if you don't want to show it during edit
+        password: initialData.password|| "", // Optional: leave empty if you don't want to show it during edit
         role: initialData.role,
         phone: number,
         address: initialData.address || "",

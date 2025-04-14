@@ -20,6 +20,7 @@ export interface UserSchema extends Record<string, unknown> {
 }
 
 export interface UserCreateSchema extends Record<string, unknown> {
+    user_id?: string;  
     name: string;                  // Name of the user (required)
     email: string;                // Optional email of the user (either email or phone must be provided)
     phone?: string;                // Optional phone number (either phone or email must be provided)
@@ -31,8 +32,9 @@ export interface UserCreateSchema extends Record<string, unknown> {
     isVerified?: boolean;          // Optional, default could be false if not provided
 }
 
+
 export interface UserUpdateSchema extends Record<string, unknown> {
-    user_id?: string;               // Required to identify which user to update
+    user_id: string;               // Required to identify which user to update
     firebaseUid?: string;          // Optional firebaseUid (auto-generated, no need to update)
     name?: string;                 // Optional name to update
     email?: string;                // Optional email to update (either email or phone must be provided)
