@@ -31,7 +31,7 @@ function SchoolContent() {
   const router = useRouter();
   const [schools, setSchools] = useState<SchoolSchema[]>([]);
   const [loadingData, setLoadingData] = useState(false);
-  const {user} = useAuth();
+  const { user } = useAuth();
   const fetchSchools = async () => {
     setLoadingData(true);
     try {
@@ -46,17 +46,19 @@ function SchoolContent() {
   useEffect(() => {
     fetchSchools();
   }, []);
-  
+
   const [selectedSchools, setSelectedSchools] = useState<SchoolSchema[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // État pour le modal de suppression
   const [schoolToDelete, setSchoolToDelete] = useState<SchoolSchema | null>(null); // École à supprimer
-  
+
   const [isNotificationCard, setIsNotificationCard] = useState(false);
   const [notificationCard, setNotificationCard] = useState({
     message: "",
     type: "",
   });
+  const [isdeletedOne, setisDeletedOne] = useState(false);
+  const [isdeletedMultiple, setisDeletedMultiple] = useState(false);
 
   // Colonnes du tableau
   const columns = [
@@ -123,25 +125,41 @@ function SchoolContent() {
   ];
 
   // Gérer la suppression multiple
-  const handleDeleteSelected = () => {
-    if (selectedSchools.length === 0) {
-    alert("Please select at least one school to delete.");
-    return;
-  }
+  const handleDeleteMultiple = async (password: string) => {
+    const passwordVerified = user ? await verifyPassword(password, user.email) : false;
+    if (!passwordVerified) {
+      setNotificationCard({
+        message: "Invalid password. Please try again.",
+        type: "error",
+      });
+      setIsNotificationCard(true);
+      return;
+    }
 
-  // Récupérer les clés des lignes sélectionnées depuis le bouton
-  const deleteButton = document.querySelector("[data-remove-items-id]");
-  const keysToDelete = deleteButton?.getAttribute("data-remove-items-id")?.split(",") || [];
+    // Récupérer les clés des lignes sélectionnées depuis le bouton
+    const deleteButton = document.querySelector("[data-remove-items-id]");
+    const keysToDelete = deleteButton?.getAttribute("data-remove-items-id")?.split(",") || [];
 
-  if (confirm(`Are you sure you want to delete ${selectedSchools.length} school(s)?`)) {
-    // Filtrer les écoles en utilisant les clés
-    const newSchools = schools.filter((school, index) => {
-      const key = school.id ? String(school.id) : `row-${index}`;
-      return !keysToDelete.includes(key);
-    });
-    setSchools(newSchools);
-    setSelectedSchools([]);
-  }
+    if (keysToDelete.length > 0) {
+      try {
+        for (const key of keysToDelete) {
+          await deleteSchool(key);
+        }
+        fetchSchools();
+            setNotificationCard({
+              message: "Successfully deleted selected schools",
+              type: "success",
+            });
+            setIsNotificationCard(true);
+      } catch (error) {
+        setNotificationCard({
+          message: "School deleted successfully",
+          type: "success",
+        });
+        setIsNotificationCard(true);
+      }
+    }
+
   };
 
   // Gérer l'ajout d'une nouvelle école
@@ -161,7 +179,7 @@ function SchoolContent() {
       const data = await createSchool(newSchool);
       if (data) {
         const school: SchoolSchema = {
-          _id:data._id,
+          _id: data._id,
           school_id: data.school_id,
           name: data.name,
           email: data.email,
@@ -227,6 +245,8 @@ function SchoolContent() {
         loading={loadingData}
         onLoadingChange={setLoadingData}
         onSelectionChange={setSelectedSchools}
+        handleDeleteMultiple={()=>{setisDeletedMultiple(true)}}
+        idAccessor="school_id" // Spécifier que school_id doit être utilisé pour la suppression
       />
 
       {/* Modal pour ajouter une école */}
@@ -247,6 +267,17 @@ function SchoolContent() {
           }}
           onDelete={handleDelete}
         />
+      )}
+
+      {isdeletedMultiple && (
+        <DeleteSchoolModal
+        schoolName={"Schools"}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setisDeletedMultiple(false);
+        }}
+        onDelete={handleDeleteMultiple}
+      />
       )}
     </div>
   );

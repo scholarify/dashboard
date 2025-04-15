@@ -26,6 +26,8 @@ interface DataTableProps<T> {
   loading?: boolean;
   onLoadingChange?: (loading: boolean) => void;
   onSelectionChange?: (selectedRows: T[]) => void;
+  handleDeleteMultiple?:(ismodalopen: boolean) => void;
+  idAccessor?: keyof T; // Nouvelle propriété pour spécifier l'identifiant
 }
 
 const DataTable = <T extends Record<string, unknown>>({
@@ -37,6 +39,8 @@ const DataTable = <T extends Record<string, unknown>>({
   loading = false,
   onLoadingChange = () => {},
   onSelectionChange,
+  handleDeleteMultiple,
+  idAccessor, // Ajout de idAccessor comme prop facultative
 }: DataTableProps<T>) => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,10 +51,15 @@ const DataTable = <T extends Record<string, unknown>>({
   const itemsPerPageOptions = [5, 10, 15, 20, "All"];
 
   // Ajouter une clé unique à chaque ligne pour l'identifier
-  const dataWithKeys = data.map((row, index) => ({
-    row,
-    key: (row as any).id ?? `row-${index}`, // Utiliser row.id si disponible, sinon générer une clé unique
-  }));
+  const dataWithKeys = data.map((row, index) => {
+    // Si idAccessor est fourni et la propriété existe, utiliser cette propriété comme clé
+    // Sinon, utiliser row.id si disponible, ou générer une clé unique basée sur l'index
+    const key =
+      idAccessor && row[idAccessor] !== undefined
+        ? String(row[idAccessor])
+        : (row as any).id ?? `row-${index}`;
+    return { row, key };
+  });
 
   // Filtrer les données en fonction du terme de recherche
   const filteredData = dataWithKeys.filter(({ row }) =>
@@ -105,6 +114,27 @@ const DataTable = <T extends Record<string, unknown>>({
   const isAllSelected = selectedRows.length === filteredData.length && filteredData.length > 0;
 
   // Fonctions pour la pagination
+  const getPageNumbers = (current: number, total: number): (number | string)[] => {
+    const delta = 2; // Number of pages before/after current to show
+    const range: (number | string)[] = [];
+
+    for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
+      range.push(i);
+    }
+
+    if (current - delta > 2) {
+      range.unshift("...");
+    }
+    if (current + delta < total - 1) {
+      range.push("...");
+    }
+
+    range.unshift(1);
+    if (total > 1) range.push(total);
+
+    return range;
+  };
+
   const goToPreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -212,6 +242,9 @@ const DataTable = <T extends Record<string, unknown>>({
       {selectedRows.length > 0 && (
         <div className="mb-4">
           <button
+            onClick={() => {
+              handleDeleteMultiple?.(true)
+            }}
             className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
             data-remove-items-id={deleteButtonKeys} // Utiliser les clés au lieu des IDs
           >
@@ -220,7 +253,7 @@ const DataTable = <T extends Record<string, unknown>>({
         </div>
       )}
 
-      <div className="w-full rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col">
+      <div className="max-w-max w-full rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col">
         {/* Zone de recherche */}
         {hasSearch && (
           <div className="p-4">
@@ -277,7 +310,7 @@ const DataTable = <T extends Record<string, unknown>>({
         {/* Conteneur principal */}
         <div className="w-full flex flex-col">
           {/* Tableau avec défilement */}
-          <div className="max-h-[400px] overflow-y-auto">
+          <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
             <table className="w-max table-auto border-collapse">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-800 text-left text-sm font-semibold text-foreground p-3">
@@ -392,19 +425,23 @@ const DataTable = <T extends Record<string, unknown>>({
                   <ChevronLeft size={20} className="hidden sm:block" />
                   <span className="sm:hidden">Previous</span>
                 </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 w-[40px] h-[40px] py-1 rounded-full text-sm hidden sm:block ${
-                      currentPage === page
-                        ? "focus:outline-none ring-2 ring-teal text-teal"
-                        : "text-foreground hover:ring-2 hover:ring-teal hover:text-teal"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
+                {getPageNumbers(currentPage, totalPages).map((page, index) =>
+                  typeof page === "number" ? (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 w-[40px] h-[40px] py-1 rounded-full text-sm hidden sm:block ${
+                        currentPage === page
+                          ? "focus:outline-none ring-2 ring-teal text-teal"
+                          : "text-foreground hover:ring-2 hover:ring-teal hover:text-teal"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ) : (
+                    <span key={index} className="px-2 text-gray-400 hidden sm:block">...</span>
+                  )
+                )}
                 <button
                   onClick={goToNextPage}
                   disabled={currentPage === totalPages}
