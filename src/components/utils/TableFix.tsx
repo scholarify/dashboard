@@ -308,7 +308,7 @@ const DataTableFix = <T extends Record<string, unknown>>({
                             <p>There is no data available</p>
                         </div>
                         ) : (
-                            <table className="w-max table-auto border-collapse">
+                            <table className="w-full table-auto border-collapse">
                                 <thead>
                                     <tr className="bg-gray-50 dark:bg-gray-800 text-left text-sm font-semibold text-foreground p-3">
                                         <th className="px-4 py-3 w-12">
