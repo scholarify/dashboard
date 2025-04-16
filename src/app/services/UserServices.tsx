@@ -9,7 +9,7 @@ export function getTokenFromCookie(name: string) {
     return token;
 }
 
-export async function getCurrentUser(){
+export async function getCurrentUser() {
     const token = getTokenFromCookie("idToken");
     if (token) {
         const decodedUser: any = jwtDecode(token);
@@ -49,7 +49,7 @@ export async function getUsers() {
         const usersList = await response.json();
         const users = usersList.map((user: any) => {
             return {
-                _id:user._id,
+                _id: user._id,
                 user_id: user.user_id,
                 firebaseUid: user.firebaseUid,
                 name: user.name,
@@ -89,22 +89,22 @@ export async function createUser(userData: UserCreateSchema) {
 
         if (!response.ok) {
             let errorMessage = "Failed to create user data";
-      
+
             try {
-              const errorBody = await response.json();
-              errorMessage = errorBody?.message || errorMessage;
+                const errorBody = await response.json();
+                errorMessage = errorBody?.message || errorMessage;
             } catch (parseError) {
-              // If parsing the error body fails, use default message
-              console.warn("Could not parse error response:", parseError);
+                // If parsing the error body fails, use default message
+                console.warn("Could not parse error response:", parseError);
             }
-      
+
             console.error("Error creating user:", errorMessage);
             throw new Error(errorMessage);
-          }
+        }
 
         const data = await response.json(); // Parse the response as JSON
         return data; // Return the response data (usually the created user object)
-        
+
     } catch (error) {
         console.error("Error creating user:", error);
         throw new Error(error instanceof Error ? error.message : "Failed to create user data");
@@ -129,7 +129,7 @@ export async function updateUser(user_id: string, userData: UserUpdateSchema) {
 
         const data = await response.json(); // Parse the response as JSON
         return data; // Return the updated user data (this could be the user object with updated fields)
-        
+
     } catch (error) {
         console.error("Error updating user:", error);
         throw new Error("Failed to update user data");
@@ -153,7 +153,7 @@ export async function getUserById(userId: string) {
     const data = await response.json();
 
     const user = {
-        _id:data._id,
+        _id: data._id,
         user_id: data.user_id,
         name: data.name,
         email: data.email,
@@ -217,9 +217,43 @@ export async function deleteUser(user_id: string) {
 
         const result = await response.json();
         return result; // Might return a success message or deleted user data
-        
+
     } catch (error) {
         console.error("Error deleting user:", error);
         throw new Error(error instanceof Error ? error.message : "Failed to delete user");
     }
+}
+
+export async function getUserBy_id(_id: string) {
+    const response = await fetch(`${BASE_API_URL}/user/get-user-by-id/${_id}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getTokenFromCookie("idToken")}`,
+        },
+    });
+
+    if (!response.ok) {
+        console.error("Error fetching user:", response.statusText);
+        throw new Error("Failed to fetch user data");
+    }
+    const data = await response.json();
+
+    const user = {
+        _id: data._id,
+        user_id: data.user_id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        role: data.role,
+        address: data.address,
+        school_ids: data.school_ids, // List of school IDs if applicable
+        isVerified: data.isVerified, // Assuming there is an 'isVerified' field
+        description: data.description, // Assuming users can have a description
+        firebaseUid: data.firebaseUid, // Add firebaseUid if available
+        createdAt: data.createdAt, // Add createdAt if available
+        updatedAt: data.updatedAt, // Add updatedAt if available
+    } as UserSchema;
+
+    return user;
 }

@@ -115,6 +115,7 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
             title={navigation.title}
             isSidebarOpen={isSidebarOpen}
             toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+            onLogout={onLogout}
           />
         </div>
         <div className="flex lg:hidden flex-col gap-2">

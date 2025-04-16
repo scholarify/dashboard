@@ -67,7 +67,7 @@ function SchoolContent() {
     { header: "School Name", accessor: (row: SchoolSchema) => { return <Link href={`${BASE_URL}/schools/view?id=${row.school_id}`}>{row.name}</Link>; } },
     { header: "Email", accessor: (row: SchoolSchema) => row.email },
     { header: "Principal", accessor: (row: SchoolSchema) => row.principal_name },
-    { header: "Established Year", accessor: (row: SchoolSchema) => row.established_year },
+    { header: "Established Year", accessor: (row: SchoolSchema) => new Date(row.established_year).toLocaleDateString() },
     { header: "Address", accessor: (row: SchoolSchema) => row.address },
     { header: "Website", accessor: (row: SchoolSchema) => row.website },
     { header: "Phone Number", accessor: (row: SchoolSchema) => row.phone_number },

@@ -4,7 +4,7 @@ import { School } from "lucide-react";
 import SuperLayout from "@/components/Dashboard/Layouts/SuperLayout";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import CreateSchoolModal from "../components/CreateSchoolModal";
+import CreateSchoolModal from "../components/CreateSubscriptionModal";
 import DeleteSchoolModal from "../components/DeleteSchoolModal";
 import CircularLoader from "@/components/widgets/CircularLoader";
 import { deleteSchool, getSchoolById, updateSchool } from "@/app/services/SchoolServices";

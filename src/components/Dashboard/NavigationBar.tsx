@@ -14,8 +14,9 @@ interface NavigationBarProps {
   title: string;
   isSidebarOpen?: boolean;
   toggleSidebar?: () => void; // Optional function to toggle sidebar
+  onLogout: () => void
 }
-export default function NavigationBar({ icon: Icon, baseHref, title, toggleSidebar, isSidebarOpen }: NavigationBarProps) {
+export default function NavigationBar({ icon: Icon, baseHref, title, toggleSidebar, isSidebarOpen, onLogout }: NavigationBarProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const {user} = useAuth();
   // Vérifier le thème au chargement
@@ -39,7 +40,7 @@ export default function NavigationBar({ icon: Icon, baseHref, title, toggleSideb
 
   // Gérer la déconnexion
   const handleSignOut = () => {
-    alert("Signed out!");
+    onLogout();
   };
   return (
     <div className="w-full  flex items-center justify-between p-4 dark:bg-gray-800 bg-gray-200">
