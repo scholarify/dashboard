@@ -238,7 +238,7 @@ function SchoolContent() {
         Add New School
       </button>
 
-      <DataTableFix<SchoolSchema>
+      <DataTable<SchoolSchema>
         columns={columns}
         data={schools}
         actions={actions}

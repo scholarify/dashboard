@@ -24,7 +24,7 @@ export async function getSchools() {
                 email: school.email,
                 address: school.address,
                 website: school.website,
-                phone_numer: school.phone_number,
+                phone_number: school.phone_number,
                 principal_name: school.principal_name,
                 established_year: school.established_year,
                 description: school.description,
