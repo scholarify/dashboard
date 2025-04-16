@@ -12,6 +12,7 @@ import { Menu, X } from "lucide-react";
 import Breadcrumbs from "../BreadCrums";
 import useAuth from "@/app/hooks/useAuth";
 
+
 interface DashboardLayoutProps {
   navigation: {
     icon: React.ElementType;
@@ -29,11 +30,10 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
   onLogout,
   children,
 }) => {
-  const {user} = useAuth();
+  const {user,logout} = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const avatar = {
-    avatarUrl:
-      "https://images.ctfassets.net/h6goo9gw1hh6/2sNZtFAWOdP1lmQ33VwRN3/24e953b920a9cd0ff2e1d587742a2472/1-intro-photo-final.jpg?w=1200&h=992&fl=progressive&q=70&fm=jpg",
+    avatarUrl:user?.avatar || "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg",
     name: user?.name,
     role: user?.role,
   };
@@ -95,7 +95,7 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
             avatarUrl={avatar.avatarUrl}
             name={avatar.name || ""}
             role={avatar.role || ""}
-            onLogout={onLogout}
+            onLogout={logout}
           />
         </div>
       </div>

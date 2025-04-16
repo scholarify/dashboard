@@ -200,6 +200,7 @@ export default function Page() {
         }
       }
     };
+    
     // Gérer la suppression multiple
     const handleDeleteSelected = () => {
       if (selectedUsers.length === 0) {
