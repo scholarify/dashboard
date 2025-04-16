@@ -4,6 +4,7 @@ import { School } from "lucide-react";
 import SuperLayout from "@/components/Dashboard/Layouts/SuperLayout";
 import { Suspense, useEffect, useState } from "react";
 import DataTable from "@/components/utils/DataTable";
+import DataTableFix from "@/components/utils/TableFix";
 import { useRouter } from "next/navigation";
 import CreateSchoolModal from "./components/CreateSchoolModal";
 import DeleteSchoolModal from "./components/DeleteSchoolModal";
@@ -237,7 +238,7 @@ function SchoolContent() {
         Add New School
       </button>
 
-      <DataTable<SchoolSchema>
+      <DataTableFix<SchoolSchema>
         columns={columns}
         data={schools}
         actions={actions}

@@ -43,9 +43,9 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
       const code = rawPhone.match(/^\+\d{1,3}/)?.[0] || "+237";
       const number = rawPhone.replace(code, "");
   
-      console.log("Initial Data:", initialData); 
-      console.log("Parsed countryCode:", code); 
-      console.log("Parsed number:", number); 
+      // console.log("Initial Data:", initialData); 
+      // console.log("Parsed countryCode:", code); 
+      // console.log("Parsed number:", number); 
   
       setFormData({
         name: initialData.name || "",

@@ -37,3 +37,9 @@ export interface SchoolUpdateSchema extends Record<string, unknown> {
     established_year?: string;
     description?: string;
 }
+
+export interface SchoolDeleteSchema extends Record<string, unknown> {
+    _id?:string;
+    school_id: string; // Required: Unique ID of the user to delete
+    name: string; 
+}

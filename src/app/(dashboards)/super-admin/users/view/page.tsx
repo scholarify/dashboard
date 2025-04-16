@@ -7,12 +7,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import CreateUserModal from "../components/CreateUserModal";
 import DeleteUserModal from "../components/DeleteUserModal";
 import CircularLoader from "@/components/widgets/CircularLoader";
-import { deleteUser, getUserById, updateUser } from "@/app/services/UserServices";
+import { deleteUser, getUserById, updateUser, verifyPassword } from "@/app/services/UserServices";
 import { UserSchema, UserUpdateSchema } from "@/app/models/UserModel";
 import NotificationCard from "@/components/NotificationCard";
 import { SchoolSchema } from "@/app/models/SchoolModel";
 import { getSchools } from "@/app/services/SchoolServices";
 import UpdateUserModal from "../components/UpdateUserModal";
+
 
 const BASE_URL = "/super-admin";
 
@@ -35,6 +36,7 @@ function UserViewDetailContent() {
     const [loadingData, setLoadingData] = useState(false);
     const [isNotificationCard, setIsNotificationCard] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState("");
+        const [userToDelete, setUserToDelete] = useState<UserSchema | null>(null);
 
     const [notificationType, setNotificationType] = useState("success")
     const [loadingSchools, setLoadingSchools] = useState(true); // New state for loading schools
@@ -79,33 +81,36 @@ function UserViewDetailContent() {
 
     // Handle user deletion
 
-    const handleDelete = async (password: string) => {
-        if (password !== "admin123") {
-            alert("Incorrect password. Please try again.");
-            return;
+const handleDelete = async (password: string) => {
+      const passwordVerified = user ? await verifyPassword(password, user.email) : false;
+      //console.log("passwordVerified", passwordVerified);
+      if (!passwordVerified) {
+        setNotificationMessage("Invalid Password!");
+        setNotificationType("error");
+        setIsNotificationCard(true);
+        return;
+      }
+
+      if (userToDelete) {
+        try {
+          // Call the API to delete the user from the backend
+          await deleteUser(userToDelete.user_id); // Assuming user_id exists
+
+          // Update the frontend state to reflect the deletion
+          setUsers(users.filter((u) => u.user_id !== userToDelete.user_id));
+
+          setNotificationMessage("User Deleted successfully!");
+          setIsNotificationCard(true);
+          setNotificationType("success");
+          setUserToDelete(null);
+        } catch (error) {
+          console.error("Error deleting user:", error);
+          const errorMessage = error instanceof Error ? error.message : "Error deleting user:";
+          setNotificationMessage(errorMessage);
+          setIsNotificationCard(true);
+          setNotificationType("error");
         }
-
-        if (user) {
-            try {
-                // Call the API to delete the user from the backend
-                await deleteUser(user.user_id); // Assuming user_id exists
-
-                // Update the frontend state to reflect the deletion
-                setUsers(users.filter((u) => u.user_id !== user.user_id));
-
-                setNotificationMessage("User Deleted successfully!");
-                setIsNotificationCard(true);
-                setNotificationType("success");
-                router.push("/super-admin/users");
-
-            } catch (error) {
-                console.error("Error deleting user:", error);
-                const errorMessage = error instanceof Error ? error.message : "Error deleting user:";
-                setNotificationMessage(errorMessage);
-                setIsNotificationCard(true);
-                setNotificationType("error");
-            }
-        }
+      }
     };
 
     // Handle saving updates to the user

@@ -56,6 +56,9 @@ const CreateSchoolModal: React.FC<CreateSchoolProps> = ({ onClose, onSave, initi
       address: formData.address || "",
       website: formData.website || "",
       description: formData.description || "",
+      established_year:formData.established_year || "",
+      name:formData.name || "",
+      principal_name:formData.principal_name || "",
     });
     onClose();
   };
