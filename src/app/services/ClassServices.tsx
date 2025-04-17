@@ -22,6 +22,7 @@ export async function getClasses(): Promise<ClassSchema[]> {
         return classesList.map((cls: any) => ({
             _id: cls._id,
             class_id: cls.class_id,
+            name: cls.name,
             school_id: cls.school_id,
             class_level: cls.class_level,
             class_code: cls.class_code,
@@ -53,6 +54,7 @@ export async function getClassById(classId: string): Promise<ClassSchema> {
     return {
         _id: data._id,
         class_id: data.class_id,
+        name: data.name,
         school_id: data.school_id,
         class_level: data.class_level,
         class_code: data.class_code,

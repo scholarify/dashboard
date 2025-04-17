@@ -6,6 +6,7 @@ export interface ClassSchema extends Record<string, unknown> {
     school_id: string;           // ID of the associated school (ObjectId as string)
     class_level: string;         // Level of the class (e.g., "Primary", "Secondary")
     class_code: string;          // Class code (e.g., "JSS1-A", "SS3-Blue")
+    name:string;
     createdAt?: string;          // Timestamp of creation (auto-generated)
     updatedAt?: string;          // Timestamp of last update (auto-generated)
   }
@@ -15,6 +16,7 @@ export interface ClassSchema extends Record<string, unknown> {
     school_id: string;           // Required school ID
     class_level: string;         // Required level of the class
     class_code: string;          // Required class code
+    name:string;
   }
   
   export interface ClassUpdateSchema extends Record<string, unknown> {
@@ -22,11 +24,13 @@ export interface ClassSchema extends Record<string, unknown> {
     school_id?: string;          // Optional updated school ID
     class_level?: string;        // Optional updated level
     class_code?: string;         // Optional updated class code
+    name?:string;
   }
   
   export interface ClassDeleteSchema extends Record<string, unknown> {
     _id?: string;                // Optional MongoDB ObjectId
     class_id: string;            // Required class ID to delete
     class_level: string;         // Optional, maybe used for confirmation
+    name:string;
   }
   
