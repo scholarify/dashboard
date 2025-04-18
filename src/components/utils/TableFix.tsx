@@ -48,24 +48,26 @@ const DataTableFix = <T extends Record<string, unknown>>({
 
     const itemsPerPageOptions = [5, 10, 15, 20, "All"];
     const getPageNumbers = (current: number, total: number): (number | string)[] => {
-        const delta = 2; // Number of pages before/after current to show
-        const range: (number | string)[] = [];
+        if (total <= 5) return [...Array(total)].map((_, i) => i + 1);
 
-        for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
-            range.push(i);
+        const pages: (number | string)[] = [];
+      
+        if (current > 2) pages.push(1);
+      
+        if (current > 3) pages.push('...');
+      
+        const start = Math.max(2, current - 1);
+        const end = Math.min(total - 1, current + 1);
+      
+        for (let i = start; i <= end; i++) {
+          pages.push(i);
         }
-
-        if (current - delta > 2) {
-            range.unshift("...");
-        }
-        if (current + delta < total - 1) {
-            range.push("...");
-        }
-
-        range.unshift(1);
-        if (total > 1) range.push(total);
-
-        return range;
+      
+        if (current < total - 2) pages.push('...');
+      
+        if (current < total) pages.push(total);
+      
+        return pages;
     };
 
 
@@ -310,7 +312,7 @@ const DataTableFix = <T extends Record<string, unknown>>({
                 {/* Conteneur principal */}
                 <div className="w-full flex flex-col">
                     {/* Tableau avec défilement */}
-                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                    <div className="max-h-[400px] overflow-y-auto overflow-x-auto custom-scrollbar">
                         {loading ? (
                             <div className="w-full h-full px-4 py-4 inset-0 flex items-center justify-center">
                                 <CircularLoader size={28} color="teal" />
@@ -320,6 +322,7 @@ const DataTableFix = <T extends Record<string, unknown>>({
                                 <p>There is no data available</p>
                             </div>
                         ) : (
+                            <div className="min-w-max">
                             <table className="w-full table-auto border-collapse">
                                 <thead>
                                     <tr className="bg-gray-50 dark:bg-gray-800 text-left text-sm font-semibold text-foreground p-3">
@@ -386,6 +389,7 @@ const DataTableFix = <T extends Record<string, unknown>>({
                                     }
                                 </tbody>
                             </table>
+                            </div>
                         )}
 
                     </div>

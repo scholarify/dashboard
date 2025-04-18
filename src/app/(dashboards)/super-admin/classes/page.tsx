@@ -13,6 +13,8 @@ import useAuth from '@/app/hooks/useAuth';
 import DataTableFix from '@/components/utils/TableFix';
 import { getClasses } from '@/app/services/ClassServices';
 import { ClassSchema } from '@/app/models/ClassModel';
+import CreateLevelModal from './components/CreateLevelModal';
+
 
 export default function Page() {
     const BASE_URL = "/super-admin";
