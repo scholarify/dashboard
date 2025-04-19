@@ -21,7 +21,7 @@ export default function Page() {
 
     const navigation = {
         icon: Presentation,
-        baseHref: `${BASE_URL}/users`,
+        baseHref: `${BASE_URL}/classes`,
         title: "Classes",
     };
 

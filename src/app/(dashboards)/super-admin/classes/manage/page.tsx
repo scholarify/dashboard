@@ -138,8 +138,7 @@ function ManageClassesPage(): JSX.Element {
     {
       label: "Delete",
       onClick: (level: ClassLevelSchema) => {
-        setSelectedLevel(level);
-        setIsDeleteModalOpen(true);
+        setLevelToDelete(level);
       },
     },
   ];
@@ -215,7 +214,7 @@ function ManageClassesPage(): JSX.Element {
   }
 
   const handleDeleteLevel = async (password: string) => {
-    if (!selectedLevel || !user) return;
+    if (!LevelToDelete || !user) return;
 
     const passwordVerified = await verifyPassword(password, user.email);
     if (!passwordVerified) {
@@ -226,9 +225,9 @@ function ManageClassesPage(): JSX.Element {
     }
 
     try {
-      await deleteClassLevel(selectedLevel._id);
-      setClassLevel((prevLevels) => prevLevels.filter((lvl) => lvl._id !== selectedLevel._id));
-      setSelectedLevel(null);
+      await deleteClassLevel(LevelToDelete._id);
+      setClassLevel((prevLevels) => prevLevels.filter((lvl) => lvl._id !== LevelToDelete._id));
+      setLevelToDelete(null);
       setNotificationMessage("Class level deleted successfully!");
       setNotificationType("success");
       setIsNotificationCard(true);
@@ -238,7 +237,7 @@ function ManageClassesPage(): JSX.Element {
       setNotificationType("error");
       setIsNotificationCard(true);
     } finally {
-      setIsDeleteModalOpen(false);
+      setLevelToDelete(null);
     }
   };
 
@@ -270,10 +269,10 @@ function ManageClassesPage(): JSX.Element {
           />
         )}
 
-        {isDeleteModalOpen && selectedLevel && (
+        {LevelToDelete &&(
           <DeleteClassLevelModal
-            levelName={selectedLevel.name}
-            onClose={() => setIsDeleteModalOpen(false)}
+            levelName={LevelToDelete.name}
+            onClose={() => setLevelToDelete(null)}
             onDelete={handleDeleteLevel}
           />
         )}
