@@ -18,7 +18,7 @@ interface NavigationBarProps {
 }
 export default function NavigationBar({ icon: Icon, baseHref, title, toggleSidebar, isSidebarOpen, onLogout }: NavigationBarProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const {user} = useAuth();
+  const {user,logout} = useAuth();
   // Vérifier le thème au chargement
   useEffect(() => {
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -65,9 +65,9 @@ export default function NavigationBar({ icon: Icon, baseHref, title, toggleSideb
           <Bell className="w-6 h-6" />
         </button>
         <UserMenuModal
-          avatarUrl="https://images.ctfassets.net/h6goo9gw1hh6/2sNZtFAWOdP1lmQ33VwRN3/24e953b920a9cd0ff2e1d587742a2472/1-intro-photo-final.jpg?w=1200&h=992&fl=progressive&q=70&fm=jpg"
+          avatarUrl={user?.avatar || "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg"}
           userName= {user?.name || ""}
-          onSignOut={handleSignOut}
+          onSignOut={logout}
           onToggleTheme={toggleTheme}
           isDarkMode={isDarkMode}
         />

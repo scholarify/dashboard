@@ -36,12 +36,12 @@ function UserViewDetailContent() {
     const [loadingData, setLoadingData] = useState(false);
     const [isNotificationCard, setIsNotificationCard] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState("");
-        const [userToDelete, setUserToDelete] = useState<UserSchema | null>(null);
+    const [userToDelete, setUserToDelete] = useState<UserSchema | null>(null);
 
     const [notificationType, setNotificationType] = useState("success")
     const [loadingSchools, setLoadingSchools] = useState(true); // New state for loading schools
     const [users, setUsers] = useState<UserSchema[]>([]);
-    const roles = ["admin", "teacher", "student","super"];
+    const roles = ["admin", "teacher", "student", "super"];
 
     // Load user details based on the userId
     useEffect(() => {
@@ -81,36 +81,36 @@ function UserViewDetailContent() {
 
     // Handle user deletion
 
-const handleDelete = async (password: string) => {
-      const passwordVerified = user ? await verifyPassword(password, user.email) : false;
-      //console.log("passwordVerified", passwordVerified);
-      if (!passwordVerified) {
-        setNotificationMessage("Invalid Password!");
-        setNotificationType("error");
-        setIsNotificationCard(true);
-        return;
-      }
-
-      if (userToDelete) {
-        try {
-          // Call the API to delete the user from the backend
-          await deleteUser(userToDelete.user_id); // Assuming user_id exists
-
-          // Update the frontend state to reflect the deletion
-          setUsers(users.filter((u) => u.user_id !== userToDelete.user_id));
-
-          setNotificationMessage("User Deleted successfully!");
-          setIsNotificationCard(true);
-          setNotificationType("success");
-          setUserToDelete(null);
-        } catch (error) {
-          console.error("Error deleting user:", error);
-          const errorMessage = error instanceof Error ? error.message : "Error deleting user:";
-          setNotificationMessage(errorMessage);
-          setIsNotificationCard(true);
-          setNotificationType("error");
+    const handleDelete = async (password: string) => {
+        const passwordVerified = user ? await verifyPassword(password, user.email) : false;
+        //console.log("passwordVerified", passwordVerified);
+        if (!passwordVerified) {
+            setNotificationMessage("Invalid Password!");
+            setNotificationType("error");
+            setIsNotificationCard(true);
+            return;
         }
-      }
+
+        if (userToDelete) {
+            try {
+                // Call the API to delete the user from the backend
+                await deleteUser(userToDelete.user_id); // Assuming user_id exists
+
+                // Update the frontend state to reflect the deletion
+                setUsers(users.filter((u) => u.user_id !== userToDelete.user_id));
+
+                setNotificationMessage("User Deleted successfully!");
+                setIsNotificationCard(true);
+                setNotificationType("success");
+                setUserToDelete(null);
+            } catch (error) {
+                console.error("Error deleting user:", error);
+                const errorMessage = error instanceof Error ? error.message : "Error deleting user:";
+                setNotificationMessage(errorMessage);
+                setIsNotificationCard(true);
+                setNotificationType("error");
+            }
+        }
     };
 
     // Handle saving updates to the user
@@ -284,8 +284,8 @@ const handleDelete = async (password: string) => {
                         address: user.address || "",
                         school_ids: user.school_ids || [],
                     }}
-                    roles={roles} 
-                    schools={schools} 
+                    roles={roles}
+                    schools={schools}
                 />
 
             )}
