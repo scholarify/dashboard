@@ -40,10 +40,10 @@ const SchoolLayout: React.FC<DashboardLayoutProps> = ({
     { icon: LayoutDashboard, name: "Dashboard", href: `${BASE_URL}/dashboard` },
     { icon: School, name: "School", href: `${BASE_URL}/school` },
   ];
-    const settingsLink = { 
-    icon: Settings, 
-    name: "Settings", 
-    href: `${BASE_URL}/settings` 
+    const settingsLink = {
+    icon: Settings,
+    name: "Settings",
+    href: `${BASE_URL}/settings`
     };
 
   return (
@@ -105,6 +105,7 @@ const SchoolLayout: React.FC<DashboardLayoutProps> = ({
           icon={navigation.icon}
           baseHref={navigation.baseHref}
           title={navigation.title}
+          onLogout={onLogout}
         />
         <div>{children}</div>
       </div>

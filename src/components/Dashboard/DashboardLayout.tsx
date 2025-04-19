@@ -21,7 +21,7 @@ interface DashboardLayoutProps {
   navigation: {
     icon: React.ElementType;
     baseHref: string;
-    title:string; 
+    title:string;
   };
   showGoPro?: boolean; // Toggle for GoPro component
   onLogout: () => void; // Logout function
@@ -42,7 +42,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         name: "John Doe",
         role: "Super Admin"
       };
-      
+
   return (
     <div className="flex h-screen p-4">
 
@@ -80,12 +80,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <Divider />
           <Avatar avatarUrl={avatar.avatarUrl} name={avatar.name} role={avatar.role} onLogout={onLogout} />
         </div>
-        
+
       </div>
 
       {/* Main Content */}
       <div className="px-6 py-2 w-full">
-        <NavigationBar icon={navigation.icon} baseHref={navigation.baseHref} title={navigation.title}/>
+        <NavigationBar icon={navigation.icon} baseHref={navigation.baseHref} title={navigation.title} onLogout={onLogout}/>
         <div>{children}</div>
       </div>
     </div>
