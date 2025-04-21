@@ -6,11 +6,11 @@ import React, { Suspense, useEffect, useState } from "react";
 import { Presentation } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { getClasses } from "@/app/services/ClassServices";
+import { createClass, deleteClass, getClasses } from "@/app/services/ClassServices";
 import { getSchools } from "@/app/services/SchoolServices";
 import { createClassLevel, deleteClassLevel, getClassLevels } from "@/app/services/ClassLevels";
 
-import { ClassSchema } from "@/app/models/ClassModel";
+import { ClassCreateSchema, ClassSchema } from "@/app/models/ClassModel";
 import { SchoolSchema } from "@/app/models/SchoolModel";
 import DataTableFix from "@/components/utils/TableFix";
 import { ClassLevelCreateSchema, ClassLevelSchema } from "@/app/models/ClassLevel";
@@ -148,11 +148,54 @@ function ManageClassesPage(): JSX.Element {
     setIsClassModalOpen(true);
   };
 
-  const handleSaveClass = (newClass: ClassSchema) => {
-    setClasses((prev) => [...prev, newClass]);
-    setNotificationMessage("Class created successfully!");
-    setNotificationType("success");
-    setIsNotificationCard(true);
+  const handleSaveClass = async (classData: ClassSchema) => {
+    try {
+        // Build the new class object
+        const newClass: ClassCreateSchema = {
+          school_id: schoolId as string,
+          class_level: classData.class_level,
+          class_code: classData.class_code,
+          name: classData.name,
+        };
+    
+        // Make the API call
+        const data = await createClass(newClass);
+    
+        if (data) {
+          // Construct the class object from response (optional: you may already get it structured)
+          const createdClass: ClassSchema = {
+            _id: data._id,
+            class_id: data.class_id,
+            school_id: data.school_id,
+            class_level: data.class_level,
+            class_code: data.class_code,
+            name: data.name,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+          };
+    
+          // Optional: Update class list in state if needed
+          setClasses((prev) => [...prev, createdClass]);
+    
+          // Show success notification
+          setNotificationMessage("Class created successfully!");
+          setIsNotificationCard(true);
+          setNotificationType("success");
+        }
+      } catch (error) {
+        console.error("Error creating class:", error);
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "An unknown error occurred while creating the class.";
+        setNotificationMessage(errorMessage);
+        setIsNotificationCard(true);
+        setNotificationType("error");
+      } finally {
+        setLoadingData(false);
+        // Optionally close modal here
+        // setIsModalOpen(false);
+      }
   };
 
   const handleSaveLevel = async (levelData: ClassLevelCreateSchema) => {
@@ -197,7 +240,7 @@ function ManageClassesPage(): JSX.Element {
 
     try {
       // Call the delete class API here
-      // await deleteClass(classToDelete.class_id);
+      await deleteClass(classToDelete._id);
       setClasses((prev) => prev.filter((cls) => cls.class_id !== classToDelete.class_id));
       setClassToDelete(null);
       setNotificationMessage("Class deleted successfully!");
