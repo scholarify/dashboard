@@ -286,7 +286,7 @@ function ManageClassesPage(): JSX.Element {
 
   return (
     <SuperLayout navigation={navigation} showGoPro={true} onLogout={() => console.log("Logged out")}>
-      <div className="md:p-6 flex flex-col md:flex-row gap-6">
+      <div className="md:py-6 flex flex-col md:flex-row gap-6">
       {schoolId && isClassModalOpen &&(
         <CreateClassModal
             onClose={() => setIsClassModalOpen(false)}

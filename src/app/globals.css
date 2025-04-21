@@ -63,3 +63,9 @@ body {
   border-radius: 10px;
   border: 2px solid #e5e7eb;
 }
+.bg-glassy {
+
+  backdrop-filter: blur(10px); /* Apply blur effect to the background */
+  border-radius: 5px; /* Optional: Add rounded corners */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional: Light shadow for depth */
+}

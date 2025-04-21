@@ -1,5 +1,6 @@
 "use client";
-
+import { getStudentsByClassAndSchool } from "@/app/services/StudentServices";
+import { StudentSchema } from "@/app/models/StudentModel";
 import { BookOpen, Presentation } from "lucide-react";
 import SuperLayout from "@/components/Dashboard/Layouts/SuperLayout";
 import { useState, useEffect, Suspense } from "react";
@@ -19,6 +20,7 @@ import UpdateClassModal from "../../components/UpdateClassModal";
 import DeleteClassModal from "../../components/DeleteClassModal";
 import { verifyPassword } from "@/app/services/UserServices";
 import useAuth from "@/app/hooks/useAuth";
+import DataTableFix from "@/components/utils/TableFix";
 
 const BASE_URL = "/super-admin";
 
@@ -30,6 +32,7 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
     const [classData, setClassData] = useState<ClassSchema | null>(null);
     const [classLevels, setClassLevels] = useState<ClassLevelSchema[]>([]);
     const [school, setSchool] = useState<SchoolSchema | null>(null);
+    const [students, setStudents] = useState<StudentSchema[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -39,11 +42,21 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
     const [notificationType, setNotificationType] = useState("success")
     const { user } = useAuth();
 
-    const [notification, setNotification] = useState({
-        visible: isNotificationCard,
-        type: notificationType,
-        message: notificationMessage,
-    });
+    const studentColumns = [
+        { header: "Student ID", accessor: (row: StudentSchema) => row.student_id },
+        { header: "Full Name", accessor: (row: StudentSchema) => row.name },
+        { header: "Age", accessor: (row: StudentSchema) => row.age },
+        {
+          header: "Gender",
+          accessor: (row: StudentSchema) =>
+            row.gender ? row.gender.charAt(0).toUpperCase() + row.gender.slice(1) : "N/A",
+        },
+        {
+          header: "Status",
+          accessor: (row: StudentSchema) => row.status || "Not specified",
+        },
+      ];
+      
 
     useEffect(() => {
         const fetchData = async () => {
@@ -54,10 +67,11 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
             }
 
             try {
-                const [clsRes, levelsRes, schoolRes] = await Promise.all([
+                const [clsRes, levelsRes, schoolRes ] = await Promise.all([
                     getClassById(classId as string),
                     getClassLevels(),
                     getSchoolBy_id(schoolId as string),
+
                 ]);
 
                 // console.log("clsRes", clsRes);
@@ -71,6 +85,11 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
 
                 setClassData(cls);
                 setSchool(school);
+                if(cls){
+                    const studentsData = await getStudentsByClassAndSchool(cls._id, schoolId as string);
+                    setStudents(studentsData);
+                }
+
 
                 const filteredLevels = levels?.filter(
                     (lvl) => lvl.school_id === schoolId
@@ -91,6 +110,7 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
 
     // console.log("Class", classData)
     // console.log("Class Levels", classLevels)
+    // console.log("Students:", students)
 
 
 
@@ -182,15 +202,15 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
     }
 
     return (
-        <div className="md:p-6">
+        <div className="md:py-6">
             {isNotificationCard && (
                 <NotificationCard
                     title="Notification"
                     message={notificationMessage}
+                    onClose={() => setIsNotificationCard(false)}
                     type={notificationType}
                     isVisible={isNotificationCard}
-                    onClose={() => setNotification((prev) => ({ ...prev, visible: false }))}
-                    isFixed
+                    isFixed={true}
                     icon={
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z" stroke="#15803d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -270,6 +290,15 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
                     </button>
                 </div>
             </div>
+            <div className="dark:bg-gray-800 rounded-lg shadow-md  mt-4">
+            <DataTableFix
+                data={students}
+                columns={studentColumns}
+                hasSearch
+                showCheckbox={false}
+                />
+            </div>
+
 
         </div>
     );
