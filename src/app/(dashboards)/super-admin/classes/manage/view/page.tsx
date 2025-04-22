@@ -246,7 +246,7 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
             )}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                 <h1 className="text-2xl font-bold text-foreground mb-4">
-                    {classData?.name} Details
+                    {classData?.name} - <span className="opacity-60">{school?.name}</span>
                 </h1>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -290,7 +290,10 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
                     </button>
                 </div>
             </div>
-            <div className="dark:bg-gray-800 rounded-lg shadow-md  mt-4">
+            <div className="dark:bg-gray-800  mt-4">
+                <h1 className="text-2xl font-bold text-foreground mb-4 p-6">
+                    Students Of {classData?.name} - <span className="opacity-60">{school?.name}</span>
+                </h1>
             <DataTableFix
                 data={students}
                 columns={studentColumns}

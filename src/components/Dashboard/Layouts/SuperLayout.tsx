@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { Wallet, School, Users, LayoutDashboard, Presentation, GraduationCap, Settings } from "lucide-react";
+import { Wallet, School, Users, LayoutDashboard, Presentation, GraduationCap, Settings,UserPlus } from "lucide-react";
 import Divider from "../../widgets/Divider";
 import SearchBox from "../../widgets/SearchBox";
 import SidebarButton from "../SideNavButton";
@@ -46,6 +46,7 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
     { icon: Wallet, name: "Subscription", href: `${BASE_URL}/subscription` },
     { icon: Presentation, name: "Classes", href: `${BASE_URL}/classes` },
     { icon: GraduationCap, name: "Students", href: `${BASE_URL}/students` },
+    { icon: UserPlus, name: "Invite Parents", href: `${BASE_URL}/parents` },
   ];
     const settingsLink = { 
     icon: Settings, 
