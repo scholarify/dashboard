@@ -1,5 +1,3 @@
-
-
 export interface SchoolSchema extends Record<string, unknown> {
     _id:string;
     school_id: string;
