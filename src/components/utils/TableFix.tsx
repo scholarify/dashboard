@@ -231,7 +231,7 @@ const DataTableFix = <T extends Record<string, unknown>>({
                     <button
                         onClick={() => action.onClick(row)}
                         className="text-gray-500 hover:text-purple-500"
-                        title="Manage Class"
+                        title="Manage"
                     >
                         <Briefcase size={20} />
                     </button>
