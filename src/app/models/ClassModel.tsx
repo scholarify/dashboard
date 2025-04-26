@@ -12,7 +12,6 @@ export interface ClassSchema extends Record<string, unknown> {
   }
   
   export interface ClassCreateSchema extends Record<string, unknown> {
-    class_id: string;            // Required class identifier
     school_id: string;           // Required school ID
     class_level: string;         // Required level of the class
     class_code: string;          // Required class code
@@ -20,7 +19,8 @@ export interface ClassSchema extends Record<string, unknown> {
   }
   
   export interface ClassUpdateSchema extends Record<string, unknown> {
-    class_id: string;            // Required to identify which class to update
+    _id: string;                // Required MongoDB ObjectId
+    class_id?: string;            // Required to identify which class to update
     school_id?: string;          // Optional updated school ID
     class_level?: string;        // Optional updated level
     class_code?: string;         // Optional updated class code

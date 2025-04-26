@@ -63,3 +63,57 @@ body {
   border-radius: 10px;
   border: 2px solid #e5e7eb;
 }
+.bg-glassy {
+
+  backdrop-filter: blur(10px); /* Apply blur effect to the background */
+  border-radius: 5px; /* Optional: Add rounded corners */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional: Light shadow for depth */
+}
+/* Remove default blue outline and replace with teal */
+:focus-visible {
+  outline: none !important;
+}
+
+/* Apply teal outline to all form elements on focus */
+select:focus, input:focus, textarea:focus, input[type="checkbox"]:focus {
+  outline: 2px solid #14b8a6 !important; /* Teal outline */
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.3) !important; /* Teal shadow */
+}
+
+/* Apply teal background and border when checkbox is checked */
+input[type="checkbox"]:checked {
+  background-color: #14b8a6 !important; /* Teal background when checked */
+  border-color: #14b8a6 !important; /* Teal border */
+}
+
+/* Remove blue outline from select elements */
+select:focus {
+  border-color: #14b8a6 !important; /* Teal border */
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.3) !important; /* Teal shadow */
+}
+
+/* Apply teal color on hover and focus */
+input[type="checkbox"]:checked {
+  background-color: #14b8a6 !important;
+  border-color: #14b8a6 !important;
+}
+
+input[type="checkbox"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.3) !important; /* Teal shadow */
+}
+
+/* Teal background for options in the select */
+select option:checked {
+  background-color: #14b8a6 !important;
+  color: white !important;
+}
+
+/* Remove default blue outline from form inputs */
+input:focus, textarea:focus, select:focus {
+  outline: none !important;
+  border-color: #14b8a6 !important; /* Teal border */
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.3) !important; /* Teal shadow */
+}
+
+

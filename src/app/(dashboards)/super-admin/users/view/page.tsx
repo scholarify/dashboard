@@ -13,6 +13,7 @@ import NotificationCard from "@/components/NotificationCard";
 import { SchoolSchema } from "@/app/models/SchoolModel";
 import { getSchools } from "@/app/services/SchoolServices";
 import UpdateUserModal from "../components/UpdateUserModal";
+import { Schoolbell } from "next/font/google";
 
 
 const BASE_URL = "/super-admin";

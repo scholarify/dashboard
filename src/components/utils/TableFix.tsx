@@ -231,7 +231,7 @@ const DataTableFix = <T extends Record<string, unknown>>({
                     <button
                         onClick={() => action.onClick(row)}
                         className="text-gray-500 hover:text-purple-500"
-                        title="Manage Class"
+                        title="Manage"
                     >
                         <Briefcase size={20} />
                     </button>
@@ -324,7 +324,7 @@ const DataTableFix = <T extends Record<string, unknown>>({
                         ) : (
                             <div className="min-w-max">
                             <table className="w-full table-auto border-collapse">
-                                <thead>
+                                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
                                     <tr className="bg-gray-50 dark:bg-gray-800 text-left text-sm font-semibold text-foreground p-3">
                                         {showCheckbox && (  // Conditionally render checkbox column
                                             <th className="px-4 py-3 w-12">

@@ -21,7 +21,7 @@ export default function Page() {
 
     const navigation = {
         icon: Presentation,
-        baseHref: `${BASE_URL}/users`,
+        baseHref: `${BASE_URL}/classes`,
         title: "Classes",
     };
 
@@ -71,7 +71,7 @@ export default function Page() {
         ];
     
         return (
-            <div className="md:p-6">
+            <div className="">
                 <DataTableFix
                     columns={columns}
                     data={schools}

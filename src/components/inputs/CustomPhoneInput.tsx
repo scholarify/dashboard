@@ -30,12 +30,12 @@ const CustomPhoneInput: React.FC<CustomPhoneInputProps> = ({
         <select
           value={countryCode}
           onChange={onCountryCodeChange}
-          className="px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
+          className="appearance-none bg-transparent py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
         >
-          <option value="+237">CMR +237</option>
-          <option value="+44">🇬🇧 +44</option>
-          <option value="+33">🇫🇷 +33</option>
-          <option value="+1">🇺🇸 +1</option>
+          <option value="+237" className="text-sm">🇨🇲 +237</option> {/* Adjusted CMR */}
+          <option value="+44" className="text-sm">🇬🇧 +44</option>
+          <option value="+33" className="text-sm">🇫🇷 +33</option>
+          <option value="+1" className="text-sm">🇺🇸 +1</option>
         </select>
         <input
           type="tel"

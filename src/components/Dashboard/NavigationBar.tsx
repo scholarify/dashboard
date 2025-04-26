@@ -43,7 +43,7 @@ export default function NavigationBar({ icon: Icon, baseHref, title, toggleSideb
     onLogout();
   };
   return (
-    <div className="w-full  flex items-center justify-between p-4 dark:bg-gray-800 bg-gray-200">
+    <div className="w-full flex items-center justify-between p-4 bg-glassy">
       {/* Mobile Sidebar Toggle */}
       <button
         id="mobile-sidebar-toggle"
