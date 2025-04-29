@@ -115,7 +115,7 @@ export default function Page() {
         };
         return (
             <div className="">
-           <div className="flex justify-end mb-4">
+           <div className="mb-4">
                 <button
                     onClick={() => setIsModalOpen(true)}
                     className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600"
