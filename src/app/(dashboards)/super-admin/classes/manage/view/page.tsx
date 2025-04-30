@@ -1,6 +1,10 @@
 "use client";
+<<<<<<< HEAD
 import { getStudentsByClassAndSchool } from "@/app/services/StudentServices";
 import { StudentSchema } from "@/app/models/StudentModel";
+=======
+
+>>>>>>> 988c70985b551d47087afadb9058168eb24c20b9
 import { BookOpen, Presentation } from "lucide-react";
 import SuperLayout from "@/components/Dashboard/Layouts/SuperLayout";
 import { useState, useEffect, Suspense } from "react";
