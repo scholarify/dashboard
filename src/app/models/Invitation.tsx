@@ -10,6 +10,7 @@ export interface InvitationSchema extends Record<string, unknown> {
     token: string;
     status: "pending" | "accepted" | "expired";
     invitedAt?: string; // ISO date string
+    expiresAt: string; // ISO date string
   }
   
   export interface InvitationCreateSchema extends Record<string, unknown> {
@@ -31,6 +32,7 @@ export interface InvitationSchema extends Record<string, unknown> {
     email?: string;
     phone?: string;
     name?: string;
+    expiresAt?: string; // ISO date string
   }
   
   export interface InvitationDeleteSchema extends Record<string, unknown> {

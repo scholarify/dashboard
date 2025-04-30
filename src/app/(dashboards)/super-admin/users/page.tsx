@@ -80,7 +80,7 @@ export default function Page() {
       {
         header: "Last Login",
         accessor: (row: UserSchema) => {
-          const date = new Date(row.lastActive || "No data");
+          const date = new Date(row.lastLogin || "No Date");
           return date.toLocaleString();  // Returns a human-readable date format
         }
       }
@@ -146,7 +146,7 @@ export default function Page() {
 
           // Update the users list with the newly created user
           setUsers((prev) => [...prev, createdUser]);
-
+           
           // Display success message
           setNotificationMessage("User created successfully!");
           setIsNotificationCard(true);
@@ -214,7 +214,7 @@ export default function Page() {
     };
 
     return (
-      <div className="md:p-6">
+      <div className="">
         {isNotificationCard && (
           <NotificationCard
             title="Notification"

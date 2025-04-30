@@ -9,7 +9,6 @@ import useAuth from "@/app/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import CircularLoader from "@/components/widgets/CircularLoader";
-import ProtectedRoute from "@/components/utils/ProtectedRoute";
 const BASE_URL = "/super-admin";
 
 
@@ -85,7 +84,6 @@ export default function Page() {
   const { logout, user } = useAuth();
 
   return (
-    <ProtectedRoute>
       <SuperLayout
         navigation={navigation}
         showGoPro={true}
@@ -112,6 +110,5 @@ export default function Page() {
 
         </div>
       </SuperLayout>
-    </ProtectedRoute>
   );
 }

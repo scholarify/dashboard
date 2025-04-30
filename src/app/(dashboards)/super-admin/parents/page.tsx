@@ -9,12 +9,13 @@ import Link from 'next/link';
 import useAuth from '@/app/hooks/useAuth';
 import DataTableFix from '@/components/utils/TableFix';
 import { getSchools } from '@/app/services/SchoolServices';
-import { getInvitations } from '@/app/services/InvitationServices';
+import { createInvitation, getInvitations } from '@/app/services/InvitationServices';
 import { getStudents } from '@/app/services/StudentServices'; // Add this to fetch students
 import { SchoolSchema } from '@/app/models/SchoolModel';
 import { InvitationCreateSchema, InvitationSchema } from '@/app/models/Invitation';
 import { StudentSchema } from '@/app/models/StudentModel'; // Assuming you have this
 import CreateInvitationModal from './components/CreateInviteModal';
+import NotificationCard from '@/components/NotificationCard';
 
 export default function Page() {
     const BASE_URL = "/super-admin";
@@ -32,9 +33,13 @@ export default function Page() {
         const [students, setStudents] = useState<StudentSchema[]>([]);
         const [isModalOpen, setIsModalOpen] = useState(false);
         const [loadingData, setLoadingData] = useState(false);
+        const [isNotificationCard, setIsNotificationCard] = useState(false);
+        const [notificationMessage, setNotificationMessage] = useState("");
+        const [notificationType, setNotificationType] = useState("success");
+
         console.log("Invitations:", invitations);
-        console.log("Schools:", schools);
-        console.log("Students:", students); // Log the fetched students
+        // console.log("Schools invi view:", schools);
+        // console.log("Students invi view:", students);
         useEffect(() => {
             const fetchData = async () => {
                 setLoadingData(true);
@@ -70,31 +75,31 @@ export default function Page() {
             }).join(", ");
         };
 
-    const StatusBadge = ({ status }: { status: "pending" | "accepted" | "expired" }) => {
-        const getStatusStyles = () => {
-            switch (status) {
-                case "pending":
-                    return "bg-yellow-100 text-yellow-800";
-                case "accepted":
-                    return "bg-green-100 text-green-800";
-                case "expired":
-                    return "bg-red-100 text-red-800";
-                default:
-                    return "";
-            }
+        const StatusBadge = ({ status }: { status: "pending" | "accepted" | "expired" }) => {
+            const getStatusStyles = () => {
+                switch (status) {
+                    case "pending":
+                        return "bg-yellow-100 text-yellow-800";
+                    case "accepted":
+                        return "bg-green-100 text-green-800";
+                    case "expired":
+                        return "bg-red-100 text-red-800";
+                    default:
+                        return "";
+                }
+            };
+
+            return (
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusStyles()}`}>
+                    {status}
+                </span>
+            );
         };
-    
-        return (
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusStyles()}`}>
-                {status}
-            </span>
-        );
-    };
         const columns = [
             { header: "Email", accessor: (row: InvitationSchema) => row.email },
             { header: "Phone", accessor: (row: InvitationSchema) => row.phone || "N/A" },
             { header: "Name", accessor: (row: InvitationSchema) => row.name || "N/A" },
-            { header: "Schools Invited", accessor: (row: InvitationSchema) => getSchoolNames(row.school_ids) },
+            { header: "Invited From", accessor: (row: InvitationSchema) => getSchoolNames(row.school_ids) },
             { header: "Children", accessor: (row: InvitationSchema) => getStudentNames(row.childrenIds) },
             { header: "Status", accessor: (row: InvitationSchema) => <StatusBadge status={row.status || "pending"} /> },
 
@@ -108,21 +113,86 @@ export default function Page() {
                 },
             },
         ];
-        const handleSaveInvitation = (invitationData: InvitationCreateSchema) => {
-            // TODO: send invitation to the server
-            console.log("Saving invitation", invitationData);
-            setIsModalOpen(false);
+        const handleSaveInvitation = async (invitationData: InvitationCreateSchema) => {
+            //console.log("Invitation Data:", invitationData);
+            setLoadingData(true);
+            try {
+                const newInvitation: InvitationCreateSchema = {
+                    email: invitationData.email,
+                    phone: invitationData.phone,
+                    name: invitationData.name,
+                    school_ids: invitationData.school_ids,
+                    childrenIds: invitationData.childrenIds,
+                    status: "pending",
+                    token: invitationData.token,
+                }
+                const data = await createInvitation(newInvitation)
+                if (data) {
+                    const createdInvitation: InvitationSchema = {
+                        _id: data._id,
+                        email: data.email,
+                        phone: data.phone,
+                        name: data.name,
+                        school_ids: data.school_ids,
+                        childrenIds: data.childrenIds,
+                        token: data.token,
+                        status: data.status,
+                        invitedAt: data.invitedAt,
+                        expiresAt: data.expiresAt,
+                    }
+                    const [fetchedInvitations, fetchedSchools, fetchedStudents] = await Promise.all([
+                        getInvitations(),
+                        getSchools(),
+                        getStudents(),
+                    ]);
+                
+                    setInvitations(fetchedInvitations);
+                    setSchools(fetchedSchools);
+                    setStudents(fetchedStudents);
+                    setNotificationMessage("Invitation created successfully!");
+                    setIsNotificationCard(true);
+                    setNotificationType("success");
+                }
+            } catch (error) {
+                console.error("Error creating Invitation:", error);
+                const errorMessage =
+                    error instanceof Error
+                        ? error.message
+                        : "An unknown error occurred while creating the class.";
+                setNotificationMessage(errorMessage);
+                setIsNotificationCard(true);
+                setNotificationType("error");
+            }
+            finally {
+                setLoadingData(false);
+            }
         };
         return (
             <div className="">
-           <div className="flex justify-end mb-4">
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600"
-                >
-                    Add New User
-                </button>
-            </div>
+                {isNotificationCard && (
+                    <NotificationCard
+                        title="Notification"
+                        icon={
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z" stroke="#15803d" strokeWidth="1.5" />
+                                <path d="M7.75 11.9999L10.58 14.8299L16.25 9.16992" stroke="#15803d" strokeWidth="1.5" />
+                            </svg>
+                        }
+                        message={notificationMessage}
+                        onClose={() => setIsNotificationCard(false)}
+                        type={notificationType}
+                        isVisible={isNotificationCard}
+                        isFixed={true}
+                    />
+                )}
+                <div className="flex justify-end mb-4">
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600"
+                    >
+                        Add New User
+                    </button>
+                </div>
                 {isModalOpen && (
                     <CreateInvitationModal
                         onClose={() => setIsModalOpen(false)}
