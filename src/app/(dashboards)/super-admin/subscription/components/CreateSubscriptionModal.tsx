@@ -60,11 +60,19 @@ const CreateSubscriptionModal: React.FC<CreateSubscriptionProps> = ({
       try {
         // Fetch users with role "parent"
         const users = await getUsers();
-        const parentUsers = users.filter(user => user.role === "parent").map(user => ({
-          id: user._id,
-          name: user.name,
-          email: user.email
-        }));
+        interface ParentUser {
+          id: string;
+          name: string;
+          email?: string;
+        }
+
+        const parentUsers: ParentUser[] = users
+          .filter((user: UserSchema) => user.role === "parent")
+          .map((user: UserSchema) => ({
+            id: user._id,
+            name: user.name,
+            email: user.email,
+          }));
         setParents(parentUsers);
 
         // Fetch all students
