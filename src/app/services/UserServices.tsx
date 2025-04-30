@@ -62,7 +62,7 @@ export async function getUsers() {
                 isVerified: user.isVerified,
                 verificationCode: user.verificationCode,
                 verificationCodeExpires: user.verificationCodeExpires,
-                lastActive: user.lastActive,
+                lastLogin: user.lastLogin,
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt,
             } as UserSchema;

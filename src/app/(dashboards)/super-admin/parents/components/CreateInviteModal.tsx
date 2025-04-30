@@ -100,8 +100,12 @@ const CreateInvitationModal: React.FC<CreateInvitationModalProps> = ({
   };
 
   const handleSubmit = (e: React.FormEvent) => {
+    const fullPhone = `${countryCode}${formData.phone.replace(/^0+/, "")}`;
     e.preventDefault();
-    onSave(formData);
+    onSave({
+      ...formData,
+      phone: fullPhone,
+    });
     onClose();
   };
 

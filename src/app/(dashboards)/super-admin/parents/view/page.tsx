@@ -61,7 +61,7 @@ export default function ViewParentPage() {
         setLoadingData(true);
         try {
             await resendInvitationToken(invitation.email);
-            alert("Invitation resent successfully.");
+
             setInvitation(invitation);
             setNotificationMessage("Invitation created successfully!");
             setIsNotificationCard(true);

@@ -140,7 +140,15 @@ export default function Page() {
                         invitedAt: data.invitedAt,
                         expiresAt: data.expiresAt,
                     }
-                    setInvitations((prev) => [...prev, createdInvitation]);
+                    const [fetchedInvitations, fetchedSchools, fetchedStudents] = await Promise.all([
+                        getInvitations(),
+                        getSchools(),
+                        getStudents(),
+                    ]);
+                
+                    setInvitations(fetchedInvitations);
+                    setSchools(fetchedSchools);
+                    setStudents(fetchedStudents);
                     setNotificationMessage("Invitation created successfully!");
                     setIsNotificationCard(true);
                     setNotificationType("success");
