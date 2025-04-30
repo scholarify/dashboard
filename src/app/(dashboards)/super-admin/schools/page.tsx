@@ -193,7 +193,7 @@ function SchoolContent() {
 
 
   return (
-    <div className="md:p-6">
+    <div className="">
       {isNotificationCard && (
         <NotificationCard
           title="Notification"

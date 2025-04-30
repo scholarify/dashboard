@@ -11,7 +11,7 @@ import NavigationBar from "../NavigationBar";
 import { Menu, X } from "lucide-react";
 import Breadcrumbs from "../BreadCrums";
 import useAuth from "@/app/hooks/useAuth";
-
+import ProtectedRoute from "@/components/utils/ProtectedRoute";
 
 interface DashboardLayoutProps {
   navigation: {
@@ -32,6 +32,7 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
 }) => {
   const {user,logout} = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
   const avatar = {
     avatarUrl:user?.avatar || "https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg",
     name: user?.name,
@@ -56,7 +57,8 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
 
 
   return (
-    <div className="flex h-screen sm:p-4">
+    <ProtectedRoute>
+    <div className="flex h-screen overflow-hidden sm:p-4">
       
       {/* Sidebar */}
       <div
@@ -108,7 +110,7 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
         onClick={() => setIsSidebarOpen(false)}
       ></div>
       {/* Main Content */}
-      <div className="sm:px-6 px-2 py-2 w-full flex flex-col gap-4 lg:w-[80%]">
+      <div className="sm:px-6 px-2 py-2 w-full flex flex-col gap-4 lg:w-[80%] overflow-auto custom-scrollbar">
         <div className="sticky top-0 z-20 flex items-center justify-between   ">
           <NavigationBar
             icon={navigation.icon}
@@ -125,6 +127,7 @@ const SuperLayout: React.FC<DashboardLayoutProps> = ({
         <div className="">{children}</div>
       </div>
     </div>
+  </ProtectedRoute>
   );
 };
 

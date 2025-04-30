@@ -62,7 +62,16 @@ export default function ViewParentPage() {
         try {
             await resendInvitationToken(invitation.email);
 
-            setInvitation(invitation);
+            const [invites, schoolData, studentData] = await Promise.all([
+                getInvitations(),
+                getSchools(),
+                getStudents(),
+            ]);
+
+            const found = invites.find((inv) => inv._id === invitationId);
+            if (found) setInvitation(found);
+            setSchools(schoolData);
+            setStudents(studentData);
             setNotificationMessage("Invitation created successfully!");
             setIsNotificationCard(true);
             setNotificationType("success");
