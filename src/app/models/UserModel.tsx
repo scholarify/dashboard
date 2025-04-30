@@ -15,7 +15,7 @@ export interface UserSchema extends Record<string, unknown> {
     isVerified?: boolean;           // Verification status (true/false)
     verificationCode?: string;     // Optional verification code (used for email/phone verification)
     verificationCodeExpires?: string; // Optional expiration timestamp for verification code
-    lastActive?: string;           // Timestamp of last activity (optional)
+    lastLogin?: string;           // Timestamp of last activity (optional)
     createdAt?: string;             // Timestamp of creation (auto-generated)
     updatedAt?: string;             // Timestamp of last update (auto-generated)
 }
@@ -48,7 +48,7 @@ export interface UserUpdateSchema extends Record<string, unknown> {
     isVerified?: boolean;          // Optional verification status to update
     verificationCode?: string;     // Optional verification code to update
     verificationCodeExpires?: string; // Optional expiration timestamp to update
-    lastActive?: string;           // Optional last active timestamp to update
+    lastLogin?: string;           // Optional last active timestamp to update
 }
 export interface UserDeleteSchema extends Record<string, unknown> {
     _id?:string;

@@ -24,10 +24,12 @@ export async function getInvitations(): Promise<InvitationSchema[]> {
             email: invitation.email,
             phone: invitation.phone,
             name: invitation.name,
+            school_ids: invitation.school_ids,
             childrenIds: invitation.childrenIds,
             token: invitation.token,
             status: invitation.status,
             invitedAt: invitation.invitedAt,
+            expiresAt: invitation.expiresAt,
         })) as InvitationSchema[];
 
     } catch (error) {
@@ -56,17 +58,19 @@ export async function getInvitationById(invitationId: string): Promise<Invitatio
         email: data.email,
         phone: data.phone,
         name: data.name,
+        school_ids: data.school_ids,
         childrenIds: data.childrenIds,
         token: data.token,
         status: data.status,
         invitedAt: data.invitedAt,
+        expiresAt: data.expiresAt,
     } as InvitationSchema;
 }
 
 // Create invitation
 export async function createInvitation(invitationData: InvitationCreateSchema) {
     try {
-        const response = await fetch(`${BASE_API_URL}/invitation/create-invitation`, {
+        const response = await fetch(`${BASE_API_URL}/auth/invite-parent`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -179,5 +183,29 @@ export async function deleteMultipleInvitations(invitationIds: string[]) {
     } catch (error) {
         console.error("Error deleting multiple invitations:", error);
         throw new Error(error instanceof Error ? error.message : "Failed to delete multiple invitations");
+    }
+}
+
+// Resend invitation token by email
+export async function resendInvitationToken(email: string): Promise<void> {
+    try {
+        const response = await fetch(`${BASE_API_URL}/auth/resend-invite-parent`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${getTokenFromCookie("idToken")}`,
+            },
+            body: JSON.stringify({ email }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || "Failed to resend invitation.");
+        }
+        // Optionally return result if the API returns something useful
+    } catch (error) {
+        console.error("Error resending invitation:", error);
+        throw new Error(error instanceof Error ? error.message : "An unexpected error occurred.");
     }
 }
