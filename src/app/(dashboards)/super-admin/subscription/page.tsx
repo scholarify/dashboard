@@ -5,17 +5,17 @@ import CircularLoader from '@/components/widgets/CircularLoader';
 import React, { Suspense, useEffect, useState } from 'react';
 import { Wallet } from 'lucide-react';
 import DataTable from '@/components/utils/DataTable';
-import { useRouter } from 'next/navigation';
 import NotificationCard from '@/components/NotificationCard';
-import Link from 'next/link';
 import useAuth from '@/app/hooks/useAuth';
-import { getUserById, getUserBy_id, verifyPassword } from '@/app/services/UserServices';
+import { getUserBy_id, verifyPassword } from '@/app/services/UserServices';
 import CreateSubscriptionModal from '../subscription/components/CreateSubscriptionModal';
 import DeleteUserModal from '../users/components/DeleteUserModal';
 import UpdateSubscriptionModal from './components/UpdateSubscriptionModal';
 import { getSubscriptions } from '@/app/services/SubscriptionsServices';
 import { SubscriptionSchema } from '@/app/models/SubscriptionModel';
 import { getStudentById } from '@/app/services/StudentServices';
+import { PayementSchema } from '@/app/models/PayementModel';
+import { initiateTransaction } from '@/app/services/transactionServices';
 
 // Interface pour une souscription
 interface Parent {
@@ -50,19 +50,7 @@ interface SubscriptionCreateSchema {
   childIds: string[];
 }
 
-// Données statiques pour les parents et enfants (pour la modale de création)
-const staticParents = [
-  { id: "parent1", name: "John Logan" },
-  { id: "parent2", name: "Maria Rodriguez" },
-  { id: "parent3", name: "Michael Johnson" },
-];
-
-const staticChildren = [
-  { id: "child1", name: "Emma Logan", parentId: "parent1" },
-  { id: "child2", name: "Carlos Rodriguez", parentId: "parent2", schoolInfo: "Acme High School (Form 5)" },
-  { id: "child3", name: "Ana Rodriguez", parentId: "parent2", schoolInfo: "Sability College (Form 3)" },
-  { id: "child4", name: "Sarah Johnson", parentId: "parent3" },
-];
+// We now fetch parents and children data from the API
 
 export default function Page() {
   const BASE_URL = "/super-admin";
@@ -74,7 +62,6 @@ export default function Page() {
   };
 
   function SubscriptionContent() {
-    const router = useRouter();
     const [subscriptions, setSubscriptions] = useState<SubscriptionNewFormSchema[]>([]);
     const [selectedSubscriptions, setSelectedSubscriptions] = useState<SubscriptionNewFormSchema[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -89,89 +76,89 @@ export default function Page() {
     const { user } = useAuth();
 
     async function getAllSubscriptions() {
-        try {
-          setLoadingData(true);
-          const fetchedSubscriptions = await getSubscriptions();
+      try {
+        setLoadingData(true);
+        const fetchedSubscriptions = await getSubscriptions();
 
-          // Group subscriptions by guardian_id (parent)
-          const subscriptionsByParent: Record<string, {
-            parent: { id: string, name: string, email: string },
-            children: { id: string, name: string, parentId: string }[],
-            subscriptions: SubscriptionSchema[]
-          }> = {};
+        // Group subscriptions by guardian_id (parent)
+        const subscriptionsByParent: Record<string, {
+          parent: { id: string, name: string, email: string },
+          children: { id: string, name: string, parentId: string }[],
+          subscriptions: SubscriptionSchema[]
+        }> = {};
 
-          // Process each subscription
-          await Promise.all(
-            fetchedSubscriptions.map(async (subscription: SubscriptionSchema) => {
-              // Get parent information
-              const parentData = await getUserBy_id(subscription.guardian_id);
+        // Process each subscription
+        await Promise.all(
+          fetchedSubscriptions.map(async (subscription: SubscriptionSchema) => {
+            // Get parent information
+            const parentData = await getUserBy_id(subscription.guardian_id);
 
-              if (parentData && parentData.role === "parent") {
-                // Initialize parent entry if it doesn't exist
-                if (!subscriptionsByParent[parentData._id]) {
-                  subscriptionsByParent[parentData._id] = {
-                    parent: {
-                      id: parentData._id,
-                      name: parentData.name,
-                      email: parentData.email
-                    },
-                    children: [],
-                    subscriptions: []
-                  };
-                }
-
-                // Add subscription to parent's subscriptions
-                subscriptionsByParent[parentData._id].subscriptions.push(subscription);
-
-                // Get student information for each student_id in the subscription
-                if (subscription.student_id && subscription.student_id.length > 0) {
-                  const studentPromises = subscription.student_id.map(async (studentId) => {
-                    try {
-                      const studentData = await getStudentById(studentId);
-                      if (studentData) {
-                        // Check if this child is already in the list
-                        const existingChildIndex = subscriptionsByParent[parentData._id].children
-                          .findIndex(child => child.id === studentData.student_id);
-
-                        if (existingChildIndex === -1) {
-                          // Add child if not already in the list
-                          subscriptionsByParent[parentData._id].children.push({
-                            id: studentData.student_id,
-                            name: studentData.name,
-                            parentId: parentData._id
-                          });
-                        }
-                      }
-                      return studentData;
-                    } catch (error) {
-                      console.error(`Error fetching student with ID ${studentId}:`, error);
-                      return null;
-                    }
-                  });
-
-                  await Promise.all(studentPromises);
-                }
+            if (parentData && parentData.role === "parent") {
+              // Initialize parent entry if it doesn't exist
+              if (!subscriptionsByParent[parentData._id]) {
+                subscriptionsByParent[parentData._id] = {
+                  parent: {
+                    id: parentData._id,
+                    name: parentData.name,
+                    email: parentData.email
+                  },
+                  children: [],
+                  subscriptions: []
+                };
               }
-            })
-          );
 
-          // Convert the grouped data to the format expected by the component
-          const formattedSubscriptions = Object.values(subscriptionsByParent).map(group => {
-            return {
-              parent: group.parent,
-              children: group.children,
-              status: group.subscriptions.some(sub => sub.status),
-              startDate: group.subscriptions[0]?.createdAt ? new Date(group.subscriptions[0].createdAt).toLocaleDateString() : "",
-              endDate: group.subscriptions[0]?.expiryDate ? new Date(group.subscriptions[0].expiryDate).toLocaleDateString() : ""
-            } as SubscriptionNewFormSchema;
-          });
+              // Add subscription to parent's subscriptions
+              subscriptionsByParent[parentData._id].subscriptions.push(subscription);
 
-          setSubscriptions(formattedSubscriptions);
-        } catch (error) {
-          console.error("Error fetching subscriptions:", error);
-        } finally {
-          setLoadingData(false);
-        }
+              // Get student information for each student_id in the subscription
+              if (subscription.student_id && subscription.student_id.length > 0) {
+                const studentPromises = subscription.student_id.map(async (studentId) => {
+                  try {
+                    const studentData = await getStudentById(studentId);
+                    if (studentData) {
+                      // Check if this child is already in the list
+                      const existingChildIndex = subscriptionsByParent[parentData._id].children
+                        .findIndex(child => child.id === studentData.student_id);
+
+                      if (existingChildIndex === -1) {
+                        // Add child if not already in the list
+                        subscriptionsByParent[parentData._id].children.push({
+                          id: studentData.student_id,
+                          name: studentData.name,
+                          parentId: parentData._id
+                        });
+                      }
+                    }
+                    return studentData;
+                  } catch (error) {
+                    console.error(`Error fetching student with ID ${studentId}:`, error);
+                    return null;
+                  }
+                });
+
+                await Promise.all(studentPromises);
+              }
+            }
+          })
+        );
+
+        // Convert the grouped data to the format expected by the component
+        const formattedSubscriptions = Object.values(subscriptionsByParent).map(group => {
+          return {
+            parent: group.parent,
+            children: group.children,
+            status: group.subscriptions.some(sub => sub.status),
+            startDate: group.subscriptions[0]?.createdAt ? new Date(group.subscriptions[0].createdAt).toLocaleDateString() : "",
+            endDate: group.subscriptions[0]?.expiryDate ? new Date(group.subscriptions[0].expiryDate).toLocaleDateString() : ""
+          } as SubscriptionNewFormSchema;
+        });
+
+        setSubscriptions(formattedSubscriptions);
+      } catch (error) {
+        console.error("Error fetching subscriptions:", error);
+      } finally {
+        setLoadingData(false);
+      }
     }
     useEffect(() => {
       getAllSubscriptions();
@@ -181,22 +168,23 @@ export default function Page() {
 
     const columns = [
       { header: "Parent Name", accessor: (row: SubscriptionNewFormSchema) => row.parent?.name || row.parentName || "Unknown" },
-      { header: "Child Name(s)", accessor: (row: SubscriptionNewFormSchema) => {
-        if (row.children && row.children.length > 0) {
-          return row.children.map(child => child.name).join(", ");
-        } else if (row.childNames && row.childNames.length > 0) {
-          return row.childNames.join(", ");
+      {
+        header: "Child Name(s)", accessor: (row: SubscriptionNewFormSchema) => {
+          if (row.children && row.children.length > 0) {
+            return row.children.map(child => child.name).join(", ");
+          } else if (row.childNames && row.childNames.length > 0) {
+            return row.childNames.join(", ");
+          }
+          return "No children";
         }
-        return "No children";
-      }},
+      },
       {
         header: "Status",
         accessor: (row: SubscriptionNewFormSchema) => {
           const statusText = typeof row.status === 'boolean' ? (row.status ? "Active" : "Inactive") : row.status;
           return (
             <span
-              className={`px-2 py-1 rounded-full text-sm ${
-                statusText === "Active" || row.status === true
+              className={`px-2 py-1 rounded-full text-sm ${statusText === "Active" || row.status === true
                   ? "bg-green-100 text-green-800"
                   : new Date(row.endDate) > new Date()
                     ? "bg-yellow-100 text-yellow-800"
@@ -221,6 +209,9 @@ export default function Page() {
           setSubscriptionToUpdate(subscription);
           setIsUpdateModalOpen(true);
         },
+        // Désactiver le bouton d'édition si la souscription est active
+        disabled: (subscription: SubscriptionNewFormSchema) => subscription.status === true,
+        disabledTooltip: "Cannot edit an active subscription",
       },
       {
         label: "Delete",
@@ -263,39 +254,37 @@ export default function Page() {
     const handleSaveSubscription = async (subscriptionData: SubscriptionCreateSchema) => {
       setLoadingData(true);
       try {
-        // Simuler la création d'une souscription (remplace par un appel API plus tard)
-        const parent = staticParents.find((p) => p.id === subscriptionData.parentId);
-        const children = staticChildren.filter((c) => subscriptionData.childIds.includes(c.id));
+        // // Get parent and children data from the API
+        const parentData = await getUserBy_id(subscriptionData.parentId);
 
-        if (!parent || !children.length) {
-          throw new Error("Invalid parent or children selection");
-        }
+        const childrenPromises = subscriptionData.childIds.map(childId => getStudentById(childId));
+        const childrenData = await Promise.all(childrenPromises);
 
-        const newSubscription: SubscriptionNewFormSchema = {
-          id: `sub-${subscriptions.length + 1}`,
-          parent: {
-            id: parent.id,
-            name: parent.name
-          },
-          children: children.map(c => ({
-            id: c.id,
-            name: c.name,
-            parentId: parent.id
-          })),
-          status: true,
-          startDate: "03/12/2029", // À remplacer par une date dynamique
-          endDate: "03/12/2029",   // À remplacer par une date dynamique
-          // For backward compatibility
-          parentName: parent.name,
-          childNames: children.map((c) => c.name),
-          parentId: parent.id,
-          childIds: children.map(c => c.id)
+
+        const totalAmount = childrenData.length * 19900; // Price per student
+
+        // Concaténer les IDs des enfants séparés par des underscores pour former l'externalId
+        const childrenIds = childrenData.map(child => child._id).join('_');
+
+        const newTransaction: PayementSchema = {
+          userId: parentData._id,
+          amount: totalAmount,
+          email: parentData.email,
+          name: parentData.name,
+          externalId: childrenIds,
+          redirectUrl: window.location.href
         };
 
-        setSubscriptions((prev) => [...prev, newSubscription]);
-        setNotificationMessage("Subscription created successfully!");
-        setIsNotificationCard(true);
-        setNotificationType("success");
+        // Initiate the transaction
+        const transactionResponse:any = await initiateTransaction(newTransaction);
+        console.log("Transaction Response:", transactionResponse);
+        console.log(transactionResponse);
+
+        if (transactionResponse && transactionResponse.link) {
+          window.location.href = transactionResponse.link;
+        }
+
+
       } catch (error) {
         console.error("Error creating subscription:", error);
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred while creating the subscription.";
@@ -382,8 +371,6 @@ export default function Page() {
             <CreateSubscriptionModal
               onClose={() => setIsModalOpen(false)}
               onSave={handleSaveSubscription}
-              parents={staticParents}
-              children={staticChildren}
               pricePerStudent={19900}
             />
           )}

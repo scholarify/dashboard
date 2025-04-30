@@ -14,6 +14,9 @@ interface Column<T> {
 interface Action<T> {
   label: string;
   onClick: (row: T) => void;
+  disabled?: (row: T) => boolean;
+  disabledTooltip?: string;
+  buttonStyle?: (row: T) => React.CSSProperties;
 }
 
 // Props du composant DataTable
@@ -200,13 +203,22 @@ const DataTable = <T extends Record<string, unknown>>({
 
   // Fonction pour mapper les actions aux icônes
   const getActionIcon = (action: Action<T>, row: T) => {
+    // Vérifier si l'action est désactivée pour cette ligne
+    const isDisabled = action.disabled ? action.disabled(row) : false;
+    const tooltipText = isDisabled && action.disabledTooltip ? action.disabledTooltip : "";
+
+    // Appliquer le style personnalisé si fourni
+    const customStyle = action.buttonStyle && isDisabled ? action.buttonStyle(row) : {};
+
     switch (action.label.toLowerCase()) {
       case "view":
         return (
           <button
-            onClick={() => action.onClick(row)}
-            className="text-gray-500 hover:text-teal"
-            title="View Details"
+            onClick={() => !isDisabled && action.onClick(row)}
+            className={`text-gray-500 hover:text-teal ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title={tooltipText || "View Details"}
+            style={customStyle}
+            disabled={isDisabled}
           >
             <Eye size={20} />
           </button>
@@ -214,9 +226,11 @@ const DataTable = <T extends Record<string, unknown>>({
       case "edit":
         return (
           <button
-            onClick={() => action.onClick(row)}
-            className="text-gray-500 hover:text-blue-500"
-            title="Edit"
+            onClick={() => !isDisabled && action.onClick(row)}
+            className={`text-gray-500 hover:text-blue-500 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title={tooltipText || "Edit"}
+            style={customStyle}
+            disabled={isDisabled}
           >
             <Pen size={20} />
           </button>
@@ -224,9 +238,11 @@ const DataTable = <T extends Record<string, unknown>>({
       case "delete":
         return (
           <button
-            onClick={() => action.onClick(row)}
-            className="text-gray-500 hover:text-red-500"
-            title="Delete"
+            onClick={() => !isDisabled && action.onClick(row)}
+            className={`text-gray-500 hover:text-red-500 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title={tooltipText || "Delete"}
+            style={customStyle}
+            disabled={isDisabled}
           >
             <Trash2 size={20} />
           </button>
