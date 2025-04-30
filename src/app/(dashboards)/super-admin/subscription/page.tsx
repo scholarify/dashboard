@@ -16,6 +16,7 @@ import { SubscriptionSchema } from '@/app/models/SubscriptionModel';
 import { getStudentById } from '@/app/services/StudentServices';
 import { PayementSchema } from '@/app/models/PayementModel';
 import { initiateTransaction } from '@/app/services/transactionServices';
+import ProtectedRoute from '@/components/utils/ProtectedRoute';
 
 // Interface pour une souscription
 interface Parent {
@@ -53,6 +54,8 @@ interface SubscriptionCreateSchema {
 // We now fetch parents and children data from the API
 
 export default function Page() {
+  const { logout } = useAuth();
+  
   const BASE_URL = "/super-admin";
 
   const navigation = {
@@ -114,6 +117,7 @@ export default function Page() {
               if (subscription.student_id && subscription.student_id.length > 0) {
                 const studentPromises = subscription.student_id.map(async (studentId) => {
                   try {
+                    console.log("studentId", studentId);
                     const studentData = await getStudentById(studentId);
                     if (studentData) {
                       // Check if this child is already in the list
@@ -264,7 +268,7 @@ export default function Page() {
         const totalAmount = childrenData.length * 19900; // Price per student
 
         // Concaténer les IDs des enfants séparés par des underscores pour former l'externalId
-        const childrenIds = childrenData.map(child => child._id).join('_');
+        const childrenIds = childrenData.map(child => child.student_id).join('_');
 
         const newTransaction: PayementSchema = {
           userId: parentData._id,
@@ -277,8 +281,6 @@ export default function Page() {
 
         // Initiate the transaction
         const transactionResponse:any = await initiateTransaction(newTransaction);
-        console.log("Transaction Response:", transactionResponse);
-        console.log(transactionResponse);
 
         if (transactionResponse && transactionResponse.link) {
           window.location.href = transactionResponse.link;
@@ -437,13 +439,15 @@ export default function Page() {
         </div>
       }
     >
-      <SuperLayout
-        navigation={navigation}
-        showGoPro={true}
-        onLogout={() => console.log("Logged out")}
-      >
-        <SubscriptionContent />
-      </SuperLayout>
+      <ProtectedRoute>
+        <SuperLayout
+          navigation={navigation}
+          showGoPro={true}
+          onLogout={() => logout()}
+        >
+          <SubscriptionContent />
+        </SuperLayout>
+      </ProtectedRoute>
     </Suspense>
   );
 }
