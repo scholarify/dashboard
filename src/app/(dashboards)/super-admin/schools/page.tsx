@@ -184,7 +184,7 @@ function SchoolContent() {
       console.error("Error creating school:", error);
 
     } finally {
-      setIsModalOpen(false);
+      //setIsModalOpen(false);
       setLoadingData(false);
     }
 
