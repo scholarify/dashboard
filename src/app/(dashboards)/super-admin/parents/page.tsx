@@ -36,6 +36,8 @@ export default function Page() {
         const [isNotificationCard, setIsNotificationCard] = useState(false);
         const [notificationMessage, setNotificationMessage] = useState("");
         const [notificationType, setNotificationType] = useState("success");
+        const [isSubmitting, setIsSubmitting] = useState(false);
+        const [submitStatus, setSubmitStatus] = useState<"success" | "failure" | null>(null);
 
         console.log("Invitations:", invitations);
         // console.log("Schools invi view:", schools);
@@ -115,6 +117,8 @@ export default function Page() {
         ];
         const handleSaveInvitation = async (invitationData: InvitationCreateSchema) => {
             //console.log("Invitation Data:", invitationData);
+            setIsSubmitting(true);         // Start submitting
+            setSubmitStatus(null);
             setLoadingData(true);
             try {
                 const newInvitation: InvitationCreateSchema = {
@@ -128,42 +132,42 @@ export default function Page() {
                 }
                 const data = await createInvitation(newInvitation)
                 if (data) {
-                    const createdInvitation: InvitationSchema = {
-                        _id: data._id,
-                        email: data.email,
-                        phone: data.phone,
-                        name: data.name,
-                        school_ids: data.school_ids,
-                        childrenIds: data.childrenIds,
-                        token: data.token,
-                        status: data.status,
-                        invitedAt: data.invitedAt,
-                        expiresAt: data.expiresAt,
-                    }
                     const [fetchedInvitations, fetchedSchools, fetchedStudents] = await Promise.all([
                         getInvitations(),
                         getSchools(),
                         getStudents(),
                     ]);
-                
+
                     setInvitations(fetchedInvitations);
                     setSchools(fetchedSchools);
                     setStudents(fetchedStudents);
+
+                    setSubmitStatus("success");                 // ✅ update success
                     setNotificationMessage("Invitation created successfully!");
-                    setIsNotificationCard(true);
                     setNotificationType("success");
+                    setIsNotificationCard(true);
+
+                    // optional: close modal after delay
+                    setTimeout(() => {
+                        setIsModalOpen(false);
+                        setSubmitStatus(null); // reset
+                    }, 4000);
                 }
             } catch (error) {
                 console.error("Error creating Invitation:", error);
+
+                setSubmitStatus("failure");                  // ✅ update failure
+
                 const errorMessage =
                     error instanceof Error
                         ? error.message
-                        : "An unknown error occurred while creating the class.";
+                        : "An unknown error occurred while creating the invitation.";
+
                 setNotificationMessage(errorMessage);
-                setIsNotificationCard(true);
                 setNotificationType("error");
-            }
-            finally {
+                setIsNotificationCard(true);
+            } finally {
+                setIsSubmitting(false);                     // ✅ end submitting
                 setLoadingData(false);
             }
         };
@@ -197,6 +201,8 @@ export default function Page() {
                     <CreateInvitationModal
                         onClose={() => setIsModalOpen(false)}
                         onSave={handleSaveInvitation}
+                        submitStatus={submitStatus}
+                        isSubmitting={isSubmitting}
                     />
                 )}
                 <DataTableFix

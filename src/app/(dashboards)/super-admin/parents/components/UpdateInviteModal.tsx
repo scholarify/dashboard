@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { X, ChevronDown } from "lucide-react";
-import { InvitationCreateSchema } from "@/app/models/Invitation";
+import { InvitationCreateSchema, InvitationSchema, InvitationUpdateSchema } from "@/app/models/Invitation";
 import CustomInput from "@/components/inputs/CustomInput";
 import CustomPhoneInput from "@/components/inputs/CustomPhoneInput";
 import { getSchools } from "@/app/services/SchoolServices";
@@ -14,27 +14,30 @@ import CircularLoader from "@/components/widgets/CircularLoader";
 
 interface CreateInvitationModalProps {
   onClose: () => void;
-  onSave: (invitationData: InvitationCreateSchema) => Promise<void>;
+  onSave: (invitationData: InvitationUpdateSchema) => Promise<void>;
   submitStatus: "success" | "failure" | null;
   isSubmitting: boolean;
+  initialData?: InvitationUpdateSchema;
 }
 
-const CreateInvitationModal: React.FC<CreateInvitationModalProps> = ({
+const UpdateInvitationModal: React.FC<CreateInvitationModalProps> = ({
   onClose,
   onSave,
   submitStatus,
   isSubmitting,
+  initialData,
 }) => {
 
-  const [formData, setFormData] = useState<Required<Pick<InvitationCreateSchema, "email" | "phone" | "name" | "childrenIds" | "token" | "status" | "school_ids">>>({
-    email: "",
-    phone: "",
-    name: "",
-    school_ids: [],
-    childrenIds: [],
-    token: "",
-    status: "pending",
-  });
+    const [formData, setFormData] = useState<Required<Pick<InvitationUpdateSchema, "email" | "phone" | "name" | "childrenIds" | "token" | "status" | "school_ids">>>({
+        
+        email:  "",
+        phone: "", // optional: strip +237 prefix if needed
+        name: "",
+        school_ids:[],
+        childrenIds: [],
+        token: "",
+        status: "pending",
+      });
 
   const [countryCode, setCountryCode] = useState("+237");
   const [schools, setSchools] = useState<SchoolSchema[]>([]);
@@ -47,6 +50,30 @@ const CreateInvitationModal: React.FC<CreateInvitationModalProps> = ({
 
   const childrenDropdownRef = useRef<HTMLDivElement>(null);
   const schoolDropdownRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (initialData?.phone?.startsWith("+")) {
+      const match = initialData.phone.match(/^(\+\d{1,4})/);
+      if (match) {
+        setCountryCode(match[1]);
+      }
+    }
+  }, [initialData]);
+  
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        
+        email: initialData.email || "",
+        phone: initialData.phone?.replace(/^\+237/, "") || "",
+        name: initialData.name || "",
+        school_ids: initialData.school_ids || [],
+        childrenIds: initialData.childrenIds || [],
+        token: initialData.token || "",
+        status: initialData.status || "pending",
+      });
+    }
+  }, [initialData]);
 
   // Fetch schools and students
   useEffect(() => {
@@ -111,6 +138,7 @@ const CreateInvitationModal: React.FC<CreateInvitationModalProps> = ({
     e.preventDefault();
       onSave({
         ...formData,
+        _id: initialData?._id || "",
         phone: fullPhone,
       });
   };
@@ -152,7 +180,7 @@ const CreateInvitationModal: React.FC<CreateInvitationModalProps> = ({
         {/* Form Section */}
         <div className="w-full md:w-1/2 p-6 overflow-y-auto custom-scrollbar">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-foreground">Send Invitation</h2>
+            <h2 className="text-lg font-semibold text-foreground">Update Invitation</h2>
             <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
               <X size={20} />
             </button>
@@ -320,7 +348,7 @@ const CreateInvitationModal: React.FC<CreateInvitationModalProps> = ({
                     Sending...
                   </>
                 ) : (
-                  "Send Invitation"
+                  "Update"
                 )}
               </button>
             </div>
@@ -332,4 +360,4 @@ const CreateInvitationModal: React.FC<CreateInvitationModalProps> = ({
   );
 };
 
-export default CreateInvitationModal;
+export default UpdateInvitationModal;

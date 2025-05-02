@@ -7,7 +7,6 @@ import CustomInput from "@/components/inputs/CustomInput";
 import CustomPhoneInput from "@/components/inputs/CustomPhoneInput";
 import CustomTextarea from "@/components/inputs/CustomTextarea";
 import CustomDateInput from "@/components/inputs/CustomDateInput";
-import Lottie from "lottie-react";
 import SubmissionFeedback from "@/components/widgets/SubmissionFeedback";
 import CircularLoader from "@/components/widgets/CircularLoader";
 

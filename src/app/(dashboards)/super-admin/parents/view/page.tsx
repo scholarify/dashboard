@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { getInvitations, resendInvitationToken } from "@/app/services/InvitationServices";
+import { getInvitations, resendInvitationToken, updateInvitation } from "@/app/services/InvitationServices";
 import { getSchools } from "@/app/services/SchoolServices";
 import { getStudents } from "@/app/services/StudentServices";
-import { InvitationSchema } from "@/app/models/Invitation";
+import { InvitationSchema, InvitationUpdateSchema } from "@/app/models/Invitation";
 import { SchoolSchema } from "@/app/models/SchoolModel";
 import { StudentSchema } from "@/app/models/StudentModel";
 import CircularLoader from "@/components/widgets/CircularLoader";
@@ -13,6 +13,8 @@ import SuperLayout from "@/components/Dashboard/Layouts/SuperLayout";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import NotificationCard from "@/components/NotificationCard";
+import UpdateInvitationModal from "../components/UpdateInviteModal";
+
 
 export default function ViewParentPage() {
     const [invitation, setInvitation] = useState<InvitationSchema | null>(null);
@@ -25,6 +27,9 @@ export default function ViewParentPage() {
     const [notificationType, setNotificationType] = useState("success");
     const searchParams = useSearchParams();
     const invitationId = searchParams.get("id");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitStatus, setSubmitStatus] = useState<"success" | "failure" | null>(null);
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -89,6 +94,50 @@ export default function ViewParentPage() {
         }
     }
 
+    const handleUpdate = async (invitationData: InvitationUpdateSchema) => {
+        if (invitation) {
+            setIsSubmitting(true);         // Start submitting
+            setSubmitStatus(null);
+            setLoadingData(true);
+            try {
+                const updatedInvitation: InvitationUpdateSchema = {
+                    _id: invitation._id,
+                    status: invitation.status,
+                    childrenIds: invitation.childrenIds,
+                    school_ids: invitation.school_ids,
+                    email: invitation.email,
+                    phone: invitation.phone,
+                    token: invitation.token,
+                    name: invitation.name,
+                }
+                const data = await updateInvitation(invitation._id, updatedInvitation);
+                console.log("Updated Invitation Data:", data);
+
+                if (data) {
+                    setSubmitStatus("success");
+                    setInvitation(data);
+                    setIsNotificationCard(true);
+                    setNotificationMessage("Invitation updated successfully.");
+                }
+                // optional: close modal after delay
+                setTimeout(() => {
+                    setIsUpdateModalOpen(false);
+                    setSubmitStatus(null); // reset
+                }, 4000);
+
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : "Error updating Invitation:";
+                setSubmitStatus("failure");                  // ✅ update failure
+
+                setNotificationMessage(errorMessage);
+                setIsNotificationCard(true);
+                setNotificationType("error");
+            } finally {
+                setIsSubmitting(false);                     // ✅ end submitting
+                setLoadingData(false);
+            }
+        }
+    }
     return (
         <SuperLayout
             navigation={{ icon: ArrowLeft, title: "Parent Invitation Details", baseHref: "/super-admin/parents" }}
@@ -111,6 +160,17 @@ export default function ViewParentPage() {
                     isFixed={true}
                 />
             )}
+            {invitation && isUpdateModalOpen && (
+                <UpdateInvitationModal
+                    onClose={() => setIsUpdateModalOpen(false)}
+                    initialData={invitation}
+                    onSave={handleUpdate}
+                    isSubmitting={isSubmitting}
+                    submitStatus={submitStatus}
+                />
+            )}
+
+            {/* Loading State */}
             {loading ? (
                 <div className="flex justify-center items-center h-[60vh]">
                     <CircularLoader size={32} color="teal" />
@@ -191,6 +251,12 @@ export default function ViewParentPage() {
                             >
                                 Back to Invitations
                             </Link>
+                            <button
+                                onClick={() => setIsUpdateModalOpen(true)}
+                                className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600 flex items-center gap-2"
+                            >
+                                Update
+                            </button>
 
                             {/* Conditional Action Button */}
                             {invitation.status === "expired" && (

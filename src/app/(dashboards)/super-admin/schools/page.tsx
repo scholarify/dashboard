@@ -184,7 +184,6 @@ function SchoolContent() {
       console.error("Error creating school:", error);
 
     } finally {
-      //setIsModalOpen(false);
       setLoadingData(false);
     }
 
@@ -235,6 +234,7 @@ function SchoolContent() {
         <CreateSchoolModal
           onClose={() => setIsModalOpen(false)}
           onSave={handleSave}
+          
         />
       )}
 
