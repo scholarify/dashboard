@@ -116,4 +116,18 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.3) !important; /* Teal shadow */
 }
 
+@keyframes pulseBar {
+  0% {
+    transform: scaleY(0.5);
+  }
+  50% {
+    transform: scaleY(1.5);
+  }
+  100% {
+    transform: scaleY(0.5);
+  }
+}
 
+.animate-pulseBar {
+  animation: pulseBar 1.5s ease-in-out infinite;
+}

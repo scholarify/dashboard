@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from 'framer-motion';
 import SuperLayout from '@/components/Dashboard/Layouts/SuperLayout';
 import CircularLoader from '@/components/widgets/CircularLoader';
 import React, { Suspense, useEffect, useState } from 'react';
@@ -190,12 +191,15 @@ export default function Page() {
                     />
                 )}
                 <div className="flex justify-end mb-4">
-                    <button
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ type: 'spring', stiffness: 300 }}
                         onClick={() => setIsModalOpen(true)}
                         className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600"
                     >
                         Add New User
-                    </button>
+                    </motion.button>
                 </div>
                 {isModalOpen && (
                     <CreateInvitationModal

@@ -11,6 +11,7 @@ import { StudentSchema } from "@/app/models/StudentModel";
 import { SchoolSchema } from "@/app/models/SchoolModel";
 import SubmissionFeedback from "@/components/widgets/SubmissionFeedback";
 import CircularLoader from "@/components/widgets/CircularLoader";
+import { motion } from "framer-motion";
 
 interface CreateInvitationModalProps {
   onClose: () => void;
@@ -109,10 +110,10 @@ const CreateInvitationModal: React.FC<CreateInvitationModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     const fullPhone = `${countryCode}${formData.phone.replace(/^0+/, "")}`;
     e.preventDefault();
-      onSave({
-        ...formData,
-        phone: fullPhone,
-      });
+    onSave({
+      ...formData,
+      phone: fullPhone,
+    });
   };
 
   const toggleChildSelection = (childId: string, isChecked: boolean) => {
@@ -143,9 +144,10 @@ const CreateInvitationModal: React.FC<CreateInvitationModalProps> = ({
         {/* Left Image */}
         <div className="hidden md:block md:w-1/2 h-full">
           <img
-            src="/assets/images/parent.png"
+            src="/assets/images/parent1.png"
             alt="Parent Invite"
             className="w-full h-full object-cover rounded-lg"
+            draggable={false}
           />
         </div>
 
@@ -158,174 +160,181 @@ const CreateInvitationModal: React.FC<CreateInvitationModalProps> = ({
             </button>
           </div>
           {submitStatus ? (
-          <SubmissionFeedback status={submitStatus}
-            message={
-              submitStatus === "success"
-                ? "Invitation has been sent Successfully!"
-                : "There was an error sending this invitation. Try again and if this persist contact support!"
-            } />
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <CustomInput
-              label="Full Name"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
+            <SubmissionFeedback status={submitStatus}
+              message={
+                submitStatus === "success"
+                  ? "Invitation has been sent Successfully!"
+                  : "There was an error sending this invitation. Try again and if this persist contact support!"
+              } />
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <CustomInput
+                label="Full Name"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
 
-            <CustomInput
-              label="Email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
+              <CustomInput
+                label="Email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
 
-            <CustomPhoneInput
-              label="Phone Number"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              countryCode={countryCode}
-              onCountryCodeChange={(e) => setCountryCode(e.target.value)}
-              required
-            />
+              <CustomPhoneInput
+                label="Phone Number"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                countryCode={countryCode}
+                onCountryCodeChange={(e) => setCountryCode(e.target.value)}
+                required
+              />
 
-            {/* School Multi-Select Dropdown */}
-            <div className="mb-4 flex flex-col relative">
-              <label className="text-sm font-semibold mb-1">Schools</label>
-              <div
-                onClick={() => setShowSchoolDropdown((prev) => !prev)}
-                className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-700 bg-white dark:text-white cursor-pointer flex items-center justify-between"
-              >
-                <span>
-                  {formData.school_ids.length > 0
-                    ? schools
-                      .filter((school) => formData.school_ids.includes(school._id))
-                      .map((school) => school.name)
-                      .join(", ")
-                    : "Select schools"}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
-              </div>
-
-              {showSchoolDropdown && (
+              {/* School Multi-Select Dropdown */}
+              <div className="mb-4 flex flex-col relative">
+                <label className="text-sm font-semibold mb-1">Schools</label>
                 <div
-                  ref={schoolDropdownRef}
-                  className="absolute z-10 bg-white dark:bg-gray-700 mt-1 rounded-md border max-h-48 overflow-y-auto p-2 shadow-lg w-[calc(100%-2px)] left-0"
+                  onClick={() => setShowSchoolDropdown((prev) => !prev)}
+                  className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-700 bg-white dark:text-white cursor-pointer flex items-center justify-between"
                 >
-                  <input
-                    type="text"
-                    placeholder="Search schools..."
-                    value={searchSchoolTerm}
-                    onChange={(e) => setSearchSchoolTerm(e.target.value)}
-                    className="w-full mb-2 px-2 py-1 border rounded-md text-sm dark:bg-gray-600"
-                  />
-                  {schools
-                    .filter((school) =>
-                      school.name.toLowerCase().includes(searchSchoolTerm.toLowerCase())
-                    )
-                    .map((school) => (
-                      <label
-                        key={school._id}
-                        className="flex items-center gap-2 px-2 py-1 text-sm"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={formData.school_ids.includes(school._id)}
-                          onChange={() => toggleSchoolSelection(school._id)}
-                        />
-                        {school.name}
-                      </label>
-                    ))}
+                  <span>
+                    {formData.school_ids.length > 0
+                      ? schools
+                        .filter((school) => formData.school_ids.includes(school._id))
+                        .map((school) => school.name)
+                        .join(", ")
+                      : "Select schools"}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
                 </div>
-              )}
-            </div>
 
-            {/* Children Dropdown */}
-            <div className="mb-4 flex flex-col relative">
-              <label className="text-sm font-semibold mb-1">Children</label>
-              <div
-                onClick={() => setShowChildrenDropdown((prev) => !prev)}
-                className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-700 bg-white dark:text-white cursor-pointer flex items-center justify-between"
-              >
-                <span>
-                  {formData.childrenIds.length > 0
-                    ? children
-                      .filter((child) =>
-                        formData.childrenIds.includes(child.id as string)
+                {showSchoolDropdown && (
+                  <div
+                    ref={schoolDropdownRef}
+                    className="absolute z-10 bg-white dark:bg-gray-700 mt-1 rounded-md border max-h-48 overflow-y-auto p-2 shadow-lg w-[calc(100%-2px)] left-0"
+                  >
+                    <input
+                      type="text"
+                      placeholder="Search schools..."
+                      value={searchSchoolTerm}
+                      onChange={(e) => setSearchSchoolTerm(e.target.value)}
+                      className="w-full mb-2 px-2 py-1 border rounded-md text-sm dark:bg-gray-600"
+                    />
+                    {schools
+                      .filter((school) =>
+                        school.name.toLowerCase().includes(searchSchoolTerm.toLowerCase())
                       )
-                      .map((child) => child.name)
-                      .join(", ")
-                    : "Select children"}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
+                      .map((school) => (
+                        <label
+                          key={school._id}
+                          className="flex items-center gap-2 px-2 py-1 text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.school_ids.includes(school._id)}
+                            onChange={() => toggleSchoolSelection(school._id)}
+                          />
+                          {school.name}
+                        </label>
+                      ))}
+                  </div>
+                )}
               </div>
 
-              {showChildrenDropdown && (
+              {/* Children Dropdown */}
+              <div className="mb-4 flex flex-col relative">
+                <label className="text-sm font-semibold mb-1">Children</label>
                 <div
-                  ref={childrenDropdownRef}
-                  className="absolute z-10 bg-white dark:bg-gray-700 mt-1 rounded-md border max-h-48 overflow-y-auto p-2 shadow-lg w-[calc(100%-2px)] left-0"
+                  onClick={() => setShowChildrenDropdown((prev) => !prev)}
+                  className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-700 bg-white dark:text-white cursor-pointer flex items-center justify-between"
                 >
-                  <input
-                    type="text"
-                    placeholder="Search children..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full mb-2 px-2 py-1 border rounded-md text-sm dark:bg-gray-600"
-                  />
-                  {children
-                    .filter((child) =>
-                      child.name.toLowerCase().includes(searchTerm.toLowerCase())
-                    )
-                    .map((child) => (
-                      <label
-                        key={child.id as string}
-                        className="flex items-center gap-2 px-2 py-1 text-sm"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={formData.childrenIds.includes(child.id as string)}
-                          onChange={(e) =>
-                            toggleChildSelection(child.id as string, e.target.checked)
-                          }
-                        />
-                        {child.name}
-                      </label>
-                    ))}
+                  <span>
+                    {formData.childrenIds.length > 0
+                      ? children
+                        .filter((child) =>
+                          formData.childrenIds.includes(child.id as string)
+                        )
+                        .map((child) => child.name)
+                        .join(", ")
+                      : "Select children"}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
                 </div>
-              )}
-            </div>
 
-            <div className="flex justify-end space-x-2 mt-6">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600 flex items-center gap-2"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <CircularLoader size={18} color="teal-500" />
-                    Sending...
-                  </>
-                ) : (
-                  "Send Invitation"
+                {showChildrenDropdown && (
+                  <div
+                    ref={childrenDropdownRef}
+                    className="absolute z-10 bg-white dark:bg-gray-700 mt-1 rounded-md border max-h-48 overflow-y-auto p-2 shadow-lg w-[calc(100%-2px)] left-0"
+                  >
+                    <input
+                      type="text"
+                      placeholder="Search children..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full mb-2 px-2 py-1 border rounded-md text-sm dark:bg-gray-600"
+                    />
+                    {children
+                      .filter((child) =>
+                        child.name.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map((child) => (
+                        <label
+                          key={child.id as string}
+                          className="flex items-center gap-2 px-2 py-1 text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.childrenIds.includes(child.id as string)}
+                            onChange={(e) =>
+                              toggleChildSelection(child.id as string, e.target.checked)
+                            }
+                          />
+                          {child.name}
+                        </label>
+                      ))}
+                  </div>
                 )}
-              </button>
-            </div>
-          </form>
-           )}
+              </div>
+
+              <div className="flex justify-end space-x-2 mt-6">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
+                >
+                  Cancel
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                  type="submit"
+                  className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600 flex items-center gap-2"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <CircularLoader size={18} color="teal-500" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Invitation"
+                  )}
+                </motion.button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>

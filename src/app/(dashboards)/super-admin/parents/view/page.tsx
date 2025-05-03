@@ -14,6 +14,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import NotificationCard from "@/components/NotificationCard";
 import UpdateInvitationModal from "../components/UpdateInviteModal";
+import { motion } from "framer-motion";
 
 
 export default function ViewParentPage() {
@@ -77,7 +78,7 @@ export default function ViewParentPage() {
             if (found) setInvitation(found);
             setSchools(schoolData);
             setStudents(studentData);
-            setNotificationMessage("Invitation created successfully!");
+            setNotificationMessage("Token Sent successfully!");
             setIsNotificationCard(true);
             setNotificationType("success");
         } catch (error) {
@@ -95,22 +96,24 @@ export default function ViewParentPage() {
     }
 
     const handleUpdate = async (invitationData: InvitationUpdateSchema) => {
-        if (invitation) {
+        if (invitation && invitationId) {
             setIsSubmitting(true);         // Start submitting
             setSubmitStatus(null);
             setLoadingData(true);
             try {
                 const updatedInvitation: InvitationUpdateSchema = {
-                    _id: invitation._id,
-                    status: invitation.status,
-                    childrenIds: invitation.childrenIds,
-                    school_ids: invitation.school_ids,
-                    email: invitation.email,
-                    phone: invitation.phone,
-                    token: invitation.token,
-                    name: invitation.name,
+                    _id: invitationData._id,
+                    status: invitationData.status,
+                    childrenIds: invitationData.childrenIds,
+                    school_ids: invitationData.school_ids,
+                    email: invitationData.email,
+                    phone: invitationData.phone,
+                    token: invitationData.token,
+                    name: invitationData.name,
+                    expiresAt: invitationData.expiresAt,
+                    invitedAt: invitationData.invitedAt,
                 }
-                const data = await updateInvitation(invitation._id, updatedInvitation);
+                const data = await updateInvitation(invitationId, updatedInvitation);
                 console.log("Updated Invitation Data:", data);
 
                 if (data) {
@@ -118,17 +121,19 @@ export default function ViewParentPage() {
                     setInvitation(data);
                     setIsNotificationCard(true);
                     setNotificationMessage("Invitation updated successfully.");
+                    if (data.status === "expired") { // Check if the update was successful
+                        await handleResendToken(); // Await to ensure the token is resent after update
+                    }
                 }
                 // optional: close modal after delay
                 setTimeout(() => {
                     setIsUpdateModalOpen(false);
                     setSubmitStatus(null); // reset
-                }, 4000);
+                }, 5000);
 
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : "Error updating Invitation:";
                 setSubmitStatus("failure");                  // ✅ update failure
-
                 setNotificationMessage(errorMessage);
                 setIsNotificationCard(true);
                 setNotificationType("error");
@@ -251,27 +256,40 @@ export default function ViewParentPage() {
                             >
                                 Back to Invitations
                             </Link>
-                            <button
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                transition={{ type: 'spring', stiffness: 300 }}
                                 onClick={() => setIsUpdateModalOpen(true)}
                                 className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600 flex items-center gap-2"
                             >
                                 Update
-                            </button>
+                            </motion.button>
 
                             {/* Conditional Action Button */}
                             {invitation.status === "expired" && (
-                                <button
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    transition={{ type: 'spring', stiffness: 300 }}
                                     onClick={handleResendToken}
-                                    className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-bg-orange-700"
+                                    className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-bg-orange-700 flex items-center gap-2"
                                 >
-                                    Resend Token
-                                </button>
+                                    {loadingData ? (
+                                        <>
+                                            <CircularLoader size={18} color="teal-500" />
+                                            Sending...
+                                        </>
+                                    ) : (
+                                        "Resend Token"
+                                    )}
+                                </motion.button>
                             )}
 
                             {invitation.status === "pending" && (
                                 <button
                                     disabled
-                                    className="px-4 py-2 bg-gray-500 text-white rounded-md"
+                                    className="px-4 py-2 bg-gray-500 text-white rounded-md cursor-not-allowed"
                                 >
                                     Resend Token (Disabled)
                                 </button>
