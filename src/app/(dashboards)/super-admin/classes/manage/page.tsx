@@ -21,6 +21,7 @@ import DeleteClassLevelModal from "../components/DeleteLevelModal";
 import { verifyPassword } from "@/app/services/UserServices";
 import CreateClassModal from "../components/CreateClassModal";
 import DeleteClassModal from "../components/DeleteClassModal";
+import { motion } from "framer-motion";
 
 
 const BASE_URL = "/super-admin";
@@ -48,7 +49,8 @@ function ManageClassesPage(): JSX.Element {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<ClassLevelSchema | null>(null);
   const [editingClass, setEditingClass] = useState<ClassSchema | undefined>(undefined);
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<"success" | "failure" | null>(null);
   const { user } = useAuth();
   const router = useRouter();
 
@@ -115,7 +117,7 @@ function ManageClassesPage(): JSX.Element {
 
   const navigation = {
     icon: Presentation,
-    baseHref: `${BASE_URL}/classes`,
+    baseHref: `${BASE_URL}/classes/manage/?id=${schoolId}`,
     title: school ? `Manage Classes of ${school.name}` : "Manage Classes",
   };
 
@@ -123,7 +125,7 @@ function ManageClassesPage(): JSX.Element {
     {
       label: "View",
       onClick: (cls: ClassSchema) => {
-        router.push(`${BASE_URL}/classes/manage/view?id=${cls.class_id}&schoolId=${schoolId}`);
+        router.push(`${BASE_URL}/classes/manage/view?classId=${cls.class_id}&schoolId=${schoolId}`);
       },
     },
     {
@@ -146,59 +148,72 @@ function ManageClassesPage(): JSX.Element {
   const handleAddClass = () => {
     setEditingClass(undefined);
     setIsClassModalOpen(true);
+    setSubmitStatus(null);
   };
 
   const handleSaveClass = async (classData: ClassSchema) => {
+    setIsSubmitting(true);         // Start submitting
+    setSubmitStatus(null);
+    setLoadingData(true);
     try {
-        // Build the new class object
-        const newClass: ClassCreateSchema = {
-          school_id: schoolId as string,
-          class_level: classData.class_level,
-          class_code: classData.class_code,
-          name: classData.name,
+      // Build the new class object
+      const newClass: ClassCreateSchema = {
+        school_id: schoolId as string,
+        class_level: classData.class_level,
+        class_code: classData.class_code,
+        name: classData.name,
+      };
+
+      // Make the API call
+      const data = await createClass(newClass);
+
+      if (data) {
+        // Construct the class object from response (optional: you may already get it structured)
+        const createdClass: ClassSchema = {
+          _id: data._id,
+          class_id: data.class_id,
+          school_id: data.school_id,
+          class_level: data.class_level,
+          class_code: data.class_code,
+          name: data.name,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
         };
-    
-        // Make the API call
-        const data = await createClass(newClass);
-    
-        if (data) {
-          // Construct the class object from response (optional: you may already get it structured)
-          const createdClass: ClassSchema = {
-            _id: data._id,
-            class_id: data.class_id,
-            school_id: data.school_id,
-            class_level: data.class_level,
-            class_code: data.class_code,
-            name: data.name,
-            createdAt: data.createdAt,
-            updatedAt: data.updatedAt,
-          };
-    
-          // Optional: Update class list in state if needed
-          setClasses((prev) => [...prev, createdClass]);
-    
-          // Show success notification
-          setNotificationMessage("Class created successfully!");
-          setIsNotificationCard(true);
-          setNotificationType("success");
-        }
-      } catch (error) {
-        console.error("Error creating class:", error);
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "An unknown error occurred while creating the class.";
-        setNotificationMessage(errorMessage);
+
+        // Optional: Update class list in state if needed
+        setClasses((prev) => [...prev, createdClass]);
+
+        // Show success notification
+        setSubmitStatus("success");
+        setNotificationMessage("Class created successfully!");
         setIsNotificationCard(true);
-        setNotificationType("error");
-      } finally {
-        setLoadingData(false);
-        // Optionally close modal here
-        // setIsModalOpen(false);
+        setNotificationType("success");
+
+        // optional: close modal after delay
+        setTimeout(() => {
+          setIsClassModalOpen(false);
+          setSubmitStatus(null); // reset
+        }, 10000);
       }
+    } catch (error) {
+      console.error("Error creating class:", error);
+      setSubmitStatus("failure");
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An unknown error occurred while creating the class.";
+      setNotificationMessage(errorMessage);
+      setIsNotificationCard(true);
+      setNotificationType("error");
+    } finally {
+      setIsSubmitting(false);                     // ✅ end submitting
+      setLoadingData(false);
+    }
   };
 
   const handleSaveLevel = async (levelData: ClassLevelCreateSchema) => {
+    setIsSubmitting(true);         // Start submitting
+    setSubmitStatus(null);
     setLoadingData(true);
     try {
       const newLevel: ClassLevelCreateSchema = {
@@ -215,19 +230,37 @@ function ManageClassesPage(): JSX.Element {
         };
 
         setClassLevel((prev) => [...prev, createdLevel]);
+        setSubmitStatus("success");
         setNotificationMessage("Level created successfully!");
         setNotificationType("success");
         setIsNotificationCard(true);
+
+        setTimeout(() => {
+          setIsLevelModalOpen(false);
+          setSubmitStatus(null); // reset
+        }, 10000);
       }
     } catch (error) {
       console.error("Error creating class level:", error);
-      alert("Failed to create class level");
+      setSubmitStatus("failure");                  // ✅ update failure
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An unknown error occurred while creating a class level.";
+
+      setNotificationMessage(errorMessage);
+      setNotificationType("error");
+      setIsNotificationCard(true);
     } finally {
+      setIsSubmitting(false);                     // ✅ end submitting
       setLoadingData(false);
     }
   };
 
   const handleDeleteClass = async (password: string) => {
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+    setLoadingData(true);
     if (!classToDelete || !user) return;
 
     const passwordVerified = await verifyPassword(password, user.email);
@@ -235,6 +268,15 @@ function ManageClassesPage(): JSX.Element {
       setNotificationMessage("Invalid Password!");
       setNotificationType("error");
       setIsNotificationCard(true);
+
+      // ✅ Fix: Reset loading/submitting states even when password fails
+      setIsSubmitting(false);
+      setLoadingData(false);
+      setSubmitStatus("failure");
+      setTimeout(() => {
+        setClassToDelete(null); // ✅ Close delete modal properly
+        setSubmitStatus(null);
+      }, 10000);
       return;
     }
 
@@ -242,21 +284,39 @@ function ManageClassesPage(): JSX.Element {
       // Call the delete class API here
       await deleteClass(classToDelete._id);
       setClasses((prev) => prev.filter((cls) => cls.class_id !== classToDelete.class_id));
-      setClassToDelete(null);
-      setNotificationMessage("Class deleted successfully!");
+      setSubmitStatus("success");
+      setNotificationMessage("Class Deleted successfully!");
       setNotificationType("success");
       setIsNotificationCard(true);
+
+      setTimeout(() => {
+        setClassToDelete(null); // ✅ Close delete modal properly
+        setSubmitStatus(null);
+      }, 10000);
     } catch (error) {
-      console.error("Error deleting class:", error);
-      setNotificationMessage("Failed to delete class.");
+      console.error("Error Deleting Class :", error);
+
+      setSubmitStatus("failure");
+
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An unknown error occurred while deleting this class.";
+
+      setNotificationMessage(errorMessage);
       setNotificationType("error");
       setIsNotificationCard(true);
+
     } finally {
-      setClassToDelete(null);
+      setIsSubmitting(false);
+      setLoadingData(false);
     }
   }
 
   const handleDeleteLevel = async (password: string) => {
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+    setLoadingData(true);
     if (!LevelToDelete || !user) return;
 
     const passwordVerified = await verifyPassword(password, user.email);
@@ -264,59 +324,90 @@ function ManageClassesPage(): JSX.Element {
       setNotificationMessage("Invalid Password!");
       setNotificationType("error");
       setIsNotificationCard(true);
+
+      // ✅ Fix: Reset loading/submitting states even when password fails
+      setIsSubmitting(false);
+      setLoadingData(false);
+      setSubmitStatus("failure");
+      setTimeout(() => {
+        setLevelToDelete(null); // ✅ Close delete modal properly
+        setSubmitStatus(null);
+      }, 10000);
       return;
     }
 
     try {
       await deleteClassLevel(LevelToDelete._id);
       setClassLevel((prevLevels) => prevLevels.filter((lvl) => lvl._id !== LevelToDelete._id));
-      setLevelToDelete(null);
+
+      setSubmitStatus("success");
       setNotificationMessage("Class level deleted successfully!");
       setNotificationType("success");
       setIsNotificationCard(true);
+
+      setTimeout(() => {
+        setLevelToDelete(null); // ✅ Close delete modal properly
+        setSubmitStatus(null);
+      }, 10000);
     } catch (error) {
-      console.error("Error deleting class level:", error);
-      setNotificationMessage("Failed to delete class level.");
+      console.error("Error Deleting Class Level:", error);
+
+      setSubmitStatus("failure");
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An unknown error occurred while deleting this class level.";
+
+      setNotificationMessage(errorMessage);
       setNotificationType("error");
       setIsNotificationCard(true);
     } finally {
-      setLevelToDelete(null);
+      setIsSubmitting(false);
+      setLoadingData(false);
     }
   };
 
   return (
     <SuperLayout navigation={navigation} showGoPro={true} onLogout={() => console.log("Logged out")}>
       <div className="md:py-6 flex flex-col md:flex-row gap-6">
-      {schoolId && isClassModalOpen &&(
-        <CreateClassModal
-            onClose={() => setIsClassModalOpen(false)}
+        {schoolId && isClassModalOpen && (
+          <CreateClassModal
+            onClose={() => {setIsClassModalOpen(false),setSubmitStatus(null)}}
             onSave={handleSaveClass}
             schoolId={schoolId} // ✅ guaranteed to be string here
             classLevels={classLevel}
             initialData={editingClass}
-        />
+            submitStatus={submitStatus}
+            isSubmitting={isSubmitting}
+          />
         )}
 
         {classToDelete && (
           <DeleteClassModal
             className={classToDelete.name}
-            onClose={() => setClassToDelete(null)}
+            onClose={() => {setClassToDelete(null),setSubmitStatus(null)}}
             onDelete={handleDeleteClass}
+            submitStatus={submitStatus}
+            isSubmitting={isSubmitting}
           />
         )}
         {isLevelModalOpen && schoolId && (
           <CreateLevelModal
-            onClose={() => setIsLevelModalOpen(false)}
+            onClose={() => {setIsLevelModalOpen(false),setSubmitStatus(null)}}
             onSave={handleSaveLevel}
             schoolId={schoolId}
+            submitStatus={submitStatus}
+            isSubmitting={isSubmitting}
           />
         )}
 
-        {LevelToDelete &&(
+        {LevelToDelete && (
           <DeleteClassLevelModal
             levelName={LevelToDelete.name}
-            onClose={() => setLevelToDelete(null)}
+            onClose={() => {setLevelToDelete(null),setSubmitStatus(null)}}
             onDelete={handleDeleteLevel}
+            submitStatus={submitStatus}
+            isSubmitting={isSubmitting}
           />
         )}
 
@@ -340,9 +431,14 @@ function ManageClassesPage(): JSX.Element {
         {/* Class Table */}
         <div className="w-full md:1/2">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
-            <button onClick={handleAddClass} className="px-4 py-2 w-full bg-teal text-white rounded-md hover:bg-teal-600">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 300 }}
+              onClick={handleAddClass}
+              className="px-4 py-2 w-full bg-teal text-white rounded-md hover:bg-teal-600">
               Add New Class
-            </button>
+            </motion.button>
             <select
               value={selectedClassLevelId}
               onChange={(e) => setSelectedClassLevelId(e.target.value)}
@@ -369,12 +465,15 @@ function ManageClassesPage(): JSX.Element {
 
         {/* Level Table */}
         <div className="w-full md:1/2">
-          <button
-            onClick={() => setIsLevelModalOpen(true)}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 300 }}
+            onClick={() => {setIsLevelModalOpen(true),setSubmitStatus(null)}}
             className="px-4 mb-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600 md:w-fit w-full"
           >
             Add New Level
-          </button>
+          </motion.button>
           <DataTableFix
             columns={classLevelColumns}
             actions={Level_actions}

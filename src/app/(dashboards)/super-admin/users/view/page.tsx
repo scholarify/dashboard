@@ -14,6 +14,8 @@ import { SchoolSchema } from "@/app/models/SchoolModel";
 import { getSchools } from "@/app/services/SchoolServices";
 import UpdateUserModal from "../components/UpdateUserModal";
 import { Schoolbell } from "next/font/google";
+import { motion } from "framer-motion";
+import Loading from "@/components/widgets/Loading";
 
 
 const BASE_URL = "/super-admin";
@@ -38,43 +40,47 @@ function UserViewDetailContent() {
     const [isNotificationCard, setIsNotificationCard] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState("");
     const [userToDelete, setUserToDelete] = useState<UserSchema | null>(null);
-
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitStatus, setSubmitStatus] = useState<"success" | "failure" | null>(null);
     const [notificationType, setNotificationType] = useState("success")
     const [loadingSchools, setLoadingSchools] = useState(true); // New state for loading schools
     const [users, setUsers] = useState<UserSchema[]>([]);
     const roles = ["admin", "teacher", "student", "super"];
 
     // Load user details based on the userId
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                if (!userId) {
-                    return;
-                }
-
-                // Fetch user details
-                const foundUser = await getUserById(userId);
-                if (foundUser) {
-                    setUser(foundUser);
-                    // Fetch all schools
-                    const schools = await getSchools();
-                    setAllSchools(schools);
-
-                    // Filter the schools based on school_ids of the user, making sure school_ids is defined
-                    const userSchools = schools.filter((school: { _id: string; }) =>
-                        foundUser.school_ids?.includes(school._id) // safe check
-                    );
-                    setFilteredSchools(userSchools);
-                } else {
-                    // Redirect if the user is not found
-                    router.push("/super-admin/users");
-                }
-            } catch (error) {
-                console.error("Error fetching user details:", error);
-            } finally {
-                setLoadingSchools(false); // Set loading to false after schools are loaded
+    const fetchData = async () => {
+        setLoadingData(true);
+        try {
+            if (!userId) {
+                return;
             }
-        };
+            // Set loading to true while fetching data
+            // Fetch user details
+            const foundUser = await getUserById(userId);
+            if (foundUser) {
+                setUser(foundUser);
+                // Fetch all schools
+                const schools = await getSchools();
+                setAllSchools(schools);
+
+                // Filter the schools based on school_ids of the user, making sure school_ids is defined
+                const userSchools = schools.filter((school: { _id: string; }) =>
+                    foundUser.school_ids?.includes(school._id) // safe check
+                );
+                setFilteredSchools(userSchools);
+            } else {
+                // Redirect if the user is not found
+                router.push("/super-admin/users");
+            }
+        } catch (error) {
+            console.error("Error fetching user details:", error);
+        } finally {
+            setLoadingData(false);   
+            setLoadingSchools(false); // Set loading to false after fetching data
+            }
+    };
+    useEffect(() => {
+
         fetchData();
     }, [userId, router]);
 
@@ -83,12 +89,25 @@ function UserViewDetailContent() {
     // Handle user deletion
 
     const handleDelete = async (password: string) => {
+        
+        setIsSubmitting(true);
+        setSubmitStatus(null);
+        // setLoadingData(true);
         const passwordVerified = user ? await verifyPassword(password, user.email) : false;
         //console.log("passwordVerified", passwordVerified);
         if (!passwordVerified) {
             setNotificationMessage("Invalid Password!");
             setNotificationType("error");
             setIsNotificationCard(true);
+
+            // ✅ Fix: Reset loading/submitting states even when password fails
+            setIsSubmitting(false);
+            // setLoadingData(false);
+            setSubmitStatus("failure");
+            setTimeout(() => {
+                setUserToDelete(null); // ✅ Close delete modal properly
+                setSubmitStatus(null);
+            }, 10000);
             return;
         }
 
@@ -98,18 +117,32 @@ function UserViewDetailContent() {
                 await deleteUser(userToDelete.user_id); // Assuming user_id exists
 
                 // Update the frontend state to reflect the deletion
-                setUsers(users.filter((u) => u.user_id !== userToDelete.user_id));
-
+                fetchData();
+                setSubmitStatus("success");
                 setNotificationMessage("User Deleted successfully!");
-                setIsNotificationCard(true);
                 setNotificationType("success");
-                setUserToDelete(null);
-            } catch (error) {
-                console.error("Error deleting user:", error);
-                const errorMessage = error instanceof Error ? error.message : "Error deleting user:";
-                setNotificationMessage(errorMessage);
                 setIsNotificationCard(true);
+
+                setTimeout(() => {
+                    setUserToDelete(null); // ✅ Close delete modal properly
+                    setIsEditModalOpen(false);
+                    setSubmitStatus(null);    
+                }, 10000);
+            } catch (error) {
+                console.error("Error Deleting User:", error);
+
+                setSubmitStatus("failure");
+                const errorMessage =
+                    error instanceof Error
+                        ? error.message
+                        : "An unknown error occurred while deleting the user.";
+
+                setNotificationMessage(errorMessage);
                 setNotificationType("error");
+                setIsNotificationCard(true);
+            } finally {
+                setIsSubmitting(false);
+                // setLoadingData(false);
             }
         }
     };
@@ -117,10 +150,12 @@ function UserViewDetailContent() {
     // Handle saving updates to the user
     const handleSave = async (userData: UserUpdateSchema) => {
         if (user) {
-            setLoadingData(true);
+            setIsSubmitting(true);         // Start submitting
+            setSubmitStatus(null);
+            // setLoadingData(true);
             try {
                 const updatedUser: UserUpdateSchema = {
-                    user_id: user.user_id,
+                    user_id: user?.user_id || "",
                     name: userData.name,
                     email: userData.email,
                     role: userData.role,
@@ -132,36 +167,51 @@ function UserViewDetailContent() {
                 if (userData.user_id) {
                     const data = await updateUser(userData.user_id, updatedUser);
                     if (data) {
-                        setUser(data);
+                        fetchData();
+                        setSubmitStatus("success");                 // ✅ update success
+                        setNotificationMessage("User Updated successfully!");
+                        setNotificationType("success");
                         setIsNotificationCard(true);
-                        setNotificationMessage("User updated successfully.");
+
+                        // optional: close modal after delay
+                        setTimeout(() => {
+                            setIsEditModalOpen(false);
+
+                            setSubmitStatus(null); // reset
+
+                        }, 10000);
                     }
                 } else {
                     console.error("User ID is undefined. Cannot update user.");
                 }
             } catch (error) {
-                //console.error("Error updating user:", error);
-                const errorMessage = error instanceof Error ? error.message : "Error updating user:";
+                console.error("Error Updating User:", error);
+
+                setSubmitStatus("failure");                  // ✅ update failure
+
+                const errorMessage =
+                    error instanceof Error
+                        ? error.message
+                        : "An unknown error occurred while Updating this user.";
+
                 setNotificationMessage(errorMessage);
-                setIsNotificationCard(true);
                 setNotificationType("error");
+                setIsNotificationCard(true);
             } finally {
-                setLoadingData(false);
-                setIsEditModalOpen(false); // Close modal after saving
+                setIsSubmitting(false);                     // ✅ end submitting
+                // setLoadingData(false);
             }
         }
     };
 
-    if (!user) {
-        return <div className="flex justify-center items-center h-screen w-full absolute top-0 left-0 z-50">
-            <CircularLoader size={32} color="teal" />
-        </div>;
-    }
+    // if (!user) {
+    //     <Loading />
+    // }
 
     if (loadingData) {
-        return <div className="flex justify-center items-center h-screen w-full absolute top-0 left-0 z-50">
-            <CircularLoader size={32} color="teal" />
-        </div>;
+        return (
+            <Loading />
+        );
     }
 
     return (
@@ -187,7 +237,7 @@ function UserViewDetailContent() {
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                     {/* Title */}
                     <h1 className="text-2xl font-bold text-foreground mb-4">
-                        {user.name} Details
+                        {user ? `${user.name} Details` : "User Details"}
                     </h1>
 
                     {/* User Information Grid */}
@@ -197,7 +247,7 @@ function UserViewDetailContent() {
                             <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
                                 User ID
                             </p>
-                            <p className="text-sm text-foreground">{user.user_id}</p>
+                            <p className="text-sm text-foreground">{user ? user.user_id : "N/A"}</p>
                         </div>
 
                         {/* User Role */}
@@ -205,7 +255,7 @@ function UserViewDetailContent() {
                             <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
                                 Role
                             </p>
-                            <p className="text-sm text-foreground">{user.role}</p>
+                            <p className="text-sm text-foreground">{user ? user.role : "N/A"}</p>
                         </div>
 
                         {/* Name */}
@@ -213,7 +263,7 @@ function UserViewDetailContent() {
                             <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
                                 Name
                             </p>
-                            <p className="text-sm text-foreground">{user.name}</p>
+                            <p className="text-sm text-foreground">{user ? user.name : "N/A"}</p>
                         </div>
 
                         {/* Email */}
@@ -221,7 +271,7 @@ function UserViewDetailContent() {
                             <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
                                 Email
                             </p>
-                            <p className="text-sm text-foreground">{user.email}</p>
+                            <p className="text-sm text-foreground">{user ? user.email : "N/A"}</p>
                         </div>
 
                         {/* Phone Number */}
@@ -229,7 +279,7 @@ function UserViewDetailContent() {
                             <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
                                 Phone Number
                             </p>
-                            <p className="text-sm text-foreground">{user.phone || "N/A"}</p>
+                            <p className="text-sm text-foreground">{user ? user.phone || "N/A" : "N/A"}</p>
                         </div>
 
                         <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
@@ -254,18 +304,24 @@ function UserViewDetailContent() {
 
                     {/* Buttons */}
                     <div className="flex justify-end space-x-2">
-                        <button
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ type: 'spring', stiffness: 300 }}
                             onClick={() => setIsEditModalOpen(true)}
                             className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal"
                         >
                             Edit User
-                        </button>
-                        <button
+                        </motion.button>
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ type: 'spring', stiffness: 300 }}
                             onClick={() => setIsDeleteModalOpen(true)} // Open delete modal
                             className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
                         >
                             Delete User
-                        </button>
+                        </motion.button>
                     </div>
                 </div>
             </div>
@@ -273,20 +329,22 @@ function UserViewDetailContent() {
             {/* Edit Modal */}
             {isEditModalOpen && (
                 <UpdateUserModal
-                    onClose={() => setIsEditModalOpen(false)}
+                    onClose={() => { setIsEditModalOpen(false); setSubmitStatus(null); setUserToDelete(null); }}
                     onSave={handleSave}
                     initialData={{
-                        user_id: user.user_id,
-                        name: user.name,
-                        email: user.email || "",
-                        phone: user.phone || "",
-                        password: user.password || "",
-                        role: user.role,
-                        address: user.address || "",
-                        school_ids: user.school_ids || [],
+                        user_id: user?.user_id || "",
+                        name: user?.name || "",
+                        email: user?.email || "",
+                        phone: user?.phone || "",
+                        password: user?.password || "",
+                        role: user?.role,
+                        address: user?.address || "",
+                        school_ids: user?.school_ids || [],
                     }}
                     roles={roles}
                     schools={schools}
+                    isSubmitting={isSubmitting}
+                    submitStatus={submitStatus}
                 />
 
             )}
@@ -294,9 +352,11 @@ function UserViewDetailContent() {
             {/* Delete Modal */}
             {isDeleteModalOpen && (
                 <DeleteUserModal
-                    userName={user.name}
-                    onClose={() => setIsDeleteModalOpen(false)}
+                    userName={user?.name || "Unknown"}
+                    onClose={() => { setIsDeleteModalOpen(false); setSubmitStatus(null); }}
                     onDelete={handleDelete}
+                    isSubmitting={isSubmitting}
+                    submitStatus={submitStatus}
                 />
             )}
         </div>

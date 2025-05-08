@@ -126,10 +126,10 @@ export default function ViewParentPage() {
                     }
                 }
                 // optional: close modal after delay
-                setTimeout(() => {
-                    setIsUpdateModalOpen(false);
-                    setSubmitStatus(null); // reset
-                }, 5000);
+                // setTimeout(() => {
+                //     setIsUpdateModalOpen(false);
+                //     setSubmitStatus(null); // reset
+                // }, 5000); 
 
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : "Error updating Invitation:";
@@ -167,7 +167,7 @@ export default function ViewParentPage() {
             )}
             {invitation && isUpdateModalOpen && (
                 <UpdateInvitationModal
-                    onClose={() => setIsUpdateModalOpen(false)}
+                    onClose={() => {setIsUpdateModalOpen(false); setSubmitStatus(null); }}
                     initialData={invitation}
                     onSave={handleUpdate}
                     isSubmitting={isSubmitting}
@@ -177,7 +177,7 @@ export default function ViewParentPage() {
 
             {/* Loading State */}
             {loading ? (
-                <div className="flex justify-center items-center h-[60vh]">
+                <div className="fixed inset-0 flex items-center justify-center z-[100] bg-black/90">
                     <CircularLoader size={32} color="teal" />
                 </div>
             ) : !invitation ? (

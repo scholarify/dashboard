@@ -10,6 +10,7 @@ interface CustomInputProps {
   placeholder?: string;
   required?: boolean;
   className?: string;
+  disabled?: boolean; // Assuming you want to keep it enabled; change as needed
 }
 
 const CustomInput: React.FC<CustomInputProps> = ({
@@ -22,6 +23,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
   placeholder,
   required = false,
   className = "",
+  disabled = false, // Assuming you want to keep it enabled; change as needed
 }) => {
   return (
     <div className="mb-4">
@@ -35,8 +37,11 @@ const CustomInput: React.FC<CustomInputProps> = ({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal ${className}`}
+        className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal 
+          ${disabled ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-50' : ''} 
+          ${className}`}        
         required={required}
+        disabled={disabled} // Assuming you want to keep it enabled; change as needed
       />
     </div>
   );

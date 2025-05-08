@@ -277,6 +277,7 @@ const UpdateInvitationModal: React.FC<CreateInvitationModalProps> = ({
                 value={formData.email}
                 onChange={handleChange}
                 required
+                disabled={true}
               />
 
               <CustomPhoneInput
@@ -288,6 +289,7 @@ const UpdateInvitationModal: React.FC<CreateInvitationModalProps> = ({
                 countryCode={countryCode}
                 onCountryCodeChange={(e) => setCountryCode(e.target.value)}
                 required
+                disabled={true}
               />
 
               {/* School Multi-Select Dropdown */}

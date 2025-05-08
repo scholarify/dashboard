@@ -4,12 +4,17 @@ import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import CustomInput from "@/components/inputs/CustomInput";
 import { ClassLevelCreateSchema } from "@/app/models/ClassLevel";
+import SubmissionFeedback from "@/components/widgets/SubmissionFeedback";
+import { motion } from "framer-motion";
+import CircularLoader from "@/components/widgets/CircularLoader";
 
 interface CreateLevelModalProps {
   onClose: () => void;
   onSave: (data: ClassLevelCreateSchema) => void;
   schoolId: string;
   initialData?: ClassLevelCreateSchema;
+  submitStatus: "success" | "failure" | null;
+  isSubmitting: boolean;
 }
 
 const CreateLevelModal: React.FC<CreateLevelModalProps> = ({
@@ -17,6 +22,8 @@ const CreateLevelModal: React.FC<CreateLevelModalProps> = ({
   onSave,
   schoolId,
   initialData,
+  submitStatus,
+  isSubmitting,
 }) => {
   const [formData, setFormData] = useState<ClassLevelCreateSchema>({
     name: "",
@@ -46,7 +53,6 @@ const CreateLevelModal: React.FC<CreateLevelModalProps> = ({
     }
 
     onSave(formData);
-    onClose();
   };
 
   return (
@@ -61,35 +67,57 @@ const CreateLevelModal: React.FC<CreateLevelModalProps> = ({
             <X size={20} />
           </button>
         </div>
+        {submitStatus ? (
+          <SubmissionFeedback status={submitStatus}
+            message={
+              submitStatus === "success"
+                ? "Invitation has been sent Successfully!"
+                : "There was an error sending this invitation. Try again and if this persist contact support!"
+            } />
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <CustomInput
+              label="Class Level Name"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+            />
 
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          <CustomInput
-            label="Class Level Name"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-
-          {/* Actions */}
-          <div className="flex justify-end space-x-2 mt-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600"
-            >
-              Save
-            </button>
-          </div>
-        </form>
+            {/* Actions */}
+            <div className="flex justify-end space-x-2 mt-6">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+                type="submit"
+                className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600 flex items-center gap-2"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <CircularLoader size={18} color="teal-500" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save"
+                )}
+              </motion.button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

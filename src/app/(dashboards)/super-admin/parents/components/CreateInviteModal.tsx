@@ -311,10 +311,11 @@ const CreateInvitationModal: React.FC<CreateInvitationModalProps> = ({
                   type="button"
                   onClick={onClose}
                   className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </motion.button>
-
+                
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}

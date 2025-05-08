@@ -7,7 +7,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import CircularLoader from "@/components/widgets/CircularLoader";
 import NotificationCard from "@/components/NotificationCard";
-
+import NoData from "@/components/widgets/NoData";
 import { getClassById, deleteClass, updateClass } from "@/app/services/ClassServices";
 import { getClassLevels } from "@/app/services/ClassLevels";
 import { getSchoolBy_id, getSchools } from "@/app/services/SchoolServices";
@@ -21,6 +21,9 @@ import DeleteClassModal from "../../components/DeleteClassModal";
 import { verifyPassword } from "@/app/services/UserServices";
 import useAuth from "@/app/hooks/useAuth";
 import DataTableFix from "@/components/utils/TableFix";
+import { motion } from "framer-motion";
+import Loading from "@/components/widgets/Loading";
+import { link } from "fs";
 
 const BASE_URL = "/super-admin";
 
@@ -40,6 +43,8 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
     const [isNotificationCard, setIsNotificationCard] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState("");
     const [notificationType, setNotificationType] = useState("success")
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<"success" | "failure" | null>(null);
     const { user } = useAuth();
 
     const studentColumns = [
@@ -47,61 +52,61 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
         { header: "Full Name", accessor: (row: StudentSchema) => row.name },
         { header: "Age", accessor: (row: StudentSchema) => row.age },
         {
-          header: "Gender",
-          accessor: (row: StudentSchema) =>
-            row.gender ? row.gender.charAt(0).toUpperCase() + row.gender.slice(1) : "N/A",
+            header: "Gender",
+            accessor: (row: StudentSchema) =>
+                row.gender ? row.gender.charAt(0).toUpperCase() + row.gender.slice(1) : "N/A",
         },
         {
-          header: "Status",
-          accessor: (row: StudentSchema) => row.status || "Not specified",
+            header: "Status",
+            accessor: (row: StudentSchema) => row.status || "Not specified",
         },
-      ];
-      
+    ];
+    const fetchData = async () => {
+        if (!classId || !schoolId) {
+            console.log("Missing classId or schoolId");
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const [clsRes, levelsRes, schoolRes] = await Promise.all([
+                getClassById(classId as string),
+                getClassLevels(),
+                getSchoolBy_id(schoolId as string),
+
+            ]);
+
+            // console.log("clsRes", clsRes);
+            // console.log("levelsRes", levelsRes);
+            // console.log("schoolRes", schoolRes);
+
+            // Adapt to the structure your API returns
+            const cls = clsRes;
+            const levels = levelsRes;
+            const school = schoolRes;
+
+            setClassData(cls);
+            setSchool(school);
+            if (cls) {
+                const studentsData = await getStudentsByClassAndSchool(cls._id, schoolId as string);
+                setStudents(studentsData);
+            }
+
+
+            const filteredLevels = levels?.filter(
+                (lvl) => lvl.school_id === schoolId
+            ) || [];
+
+            setClassLevels(filteredLevels);
+        } catch (error) {
+            console.error("Error fetching class data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            if (!classId || !schoolId) {
-                console.log("Missing classId or schoolId");
-                setLoading(false);
-                return;
-            }
 
-            try {
-                const [clsRes, levelsRes, schoolRes ] = await Promise.all([
-                    getClassById(classId as string),
-                    getClassLevels(),
-                    getSchoolBy_id(schoolId as string),
-
-                ]);
-
-                // console.log("clsRes", clsRes);
-                // console.log("levelsRes", levelsRes);
-                // console.log("schoolRes", schoolRes);
-
-                // Adapt to the structure your API returns
-                const cls = clsRes;
-                const levels = levelsRes;
-                const school = schoolRes;
-
-                setClassData(cls);
-                setSchool(school);
-                if(cls){
-                    const studentsData = await getStudentsByClassAndSchool(cls._id, schoolId as string);
-                    setStudents(studentsData);
-                }
-
-
-                const filteredLevels = levels?.filter(
-                    (lvl) => lvl.school_id === schoolId
-                ) || [];
-
-                setClassLevels(filteredLevels);
-            } catch (error) {
-                console.error("Error fetching class data:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
 
         fetchData();
     }, [classId, schoolId]);
@@ -115,8 +120,10 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
 
 
     const handleSave = async (classData: ClassUpdateSchema) => {
+
         if (user) {
-            setLoading(true);
+            setIsSubmitting(true);         // Start submitting
+            setSubmitStatus(null);
             try {
                 const updateClassData: ClassUpdateSchema = {
                     _id: classData._id,
@@ -128,29 +135,36 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
                 };
                 if (classId) {
                     const data = await updateClass(classData._id, updateClassData);
-                    console.log("error from saving class:",data);
+                    //console.log("error from saving class:", data);
                     if (data) {
                         setClassData(data);
+                        setSubmitStatus("success");                 // ✅ update success
+                        setNotificationMessage("Invitation created successfully!");
+                        setNotificationType("success");
                         setIsNotificationCard(true);
-                        setNotificationMessage("User updated successfully.");
+                        setIsSubmitting(false); // Stop submitting
+                        // optional: close modal after delay
+                        setTimeout(() => {
+                            setIsEditModalOpen(false);
+                            setSubmitStatus(null); // reset
+                        }, 10000);
                     }
-                } else {
-                    console.error("User ID is undefined. Cannot update user.");
                 }
             } catch (error) {
-                //console.error("Error updating user:", error);
-                const errorMessage = error instanceof Error ? error.message : "Error updating user:";
+                const errorMessage = error instanceof Error ? error.message : "Error updating Class:";
+                setSubmitStatus("failure");                  // ✅ update failure
                 setNotificationMessage(errorMessage);
                 setIsNotificationCard(true);
                 setNotificationType("error");
             } finally {
-                setLoading(false);
-                setIsEditModalOpen(false); // Close modal after saving
+                setIsSubmitting(false);
             }
         }
     };
 
     const handleDelete = async (password: string) => {
+        setIsSubmitting(true);
+        setSubmitStatus(null);
         if (!classData || !user) return;
         // Assuming you have a function `verifyPassword` that checks if the provided password is valid
         const passwordVerified = user ? await verifyPassword(password, user.email) : false;
@@ -160,6 +174,14 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
             setNotificationMessage("Invalid Password!");
             setNotificationType("error");
             setIsNotificationCard(true);
+
+            // ✅ Fix: Reset loading/submitting states even when password fails
+            setIsSubmitting(false);
+            setSubmitStatus("failure");
+            setTimeout(() => {
+                setIsDeleteModalOpen(false); // ✅ Close delete modal properly
+                setSubmitStatus(null);
+            }, 10000);
             return; // Stop execution if password verification fails
         }
 
@@ -168,37 +190,48 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
             try {
                 // Call the API to delete the class (assuming `deleteClass` is a function that deletes a class)
                 await deleteClass(classData._id);
-
+                fetchData();
+                setSubmitStatus("success");
                 // Remove the class from the state to update the UI
                 setNotificationMessage("Class Deleted successfully!");
                 setNotificationType("success");
                 setIsNotificationCard(true);
-
+                setTimeout(() => {
+                    setIsDeleteModalOpen(false); // ✅ Close delete modal properly
+                    setSubmitStatus(null);
+                }, 10000);
                 // Redirect back to the class list after deletion
-                router.push(`${BASE_URL}/classes`);
+                //router.push(`${BASE_URL}/classes`);
             } catch (error) {
-                console.error("Error deleting class:", error);
+                console.error("Error Deleting Class :", error);
 
-                // Handle any errors that occur during the deletion process
-                const errorMessage = error instanceof Error ? error.message : "Error deleting class";
+                setSubmitStatus("failure");
+
+                const errorMessage =
+                    error instanceof Error
+                        ? error.message
+                        : "An unknown error occurred while deleting this class.";
+
                 setNotificationMessage(errorMessage);
-                setIsNotificationCard(true);
                 setNotificationType("error");
+                setIsNotificationCard(true);
+            } finally {
+                setIsSubmitting(false);
             }
         }
     };
 
-
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen w-full absolute top-0 left-0 z-50">
-                <CircularLoader size={32} color="teal" />
-            </div>
+            <Loading/>
         );
-    }
+      }
+      
 
     if (!classData) {
-        return <p className="text-center text-gray-500">Class not found.</p>;
+        return <div className="">
+            <NoData/>
+        </div>;
     }
 
     return (
@@ -219,20 +252,15 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
                     }
                 />
             )}
-            {/* Edit Modal */}         
+            {/* Edit Modal */}
             {isEditModalOpen && (
                 <UpdateClassModal
-                    onClose={() => setIsEditModalOpen(false)}
+                    onClose={() => {setIsEditModalOpen(false); setSubmitStatus(null);}}
                     onSave={handleSave}
-                    initialData={{
-                        _id: classData._id,
-                        class_id: classData.class_id,
-                        name: classData.name,
-                        class_code: classData.class_code,
-                        class_level: classData.class_level,
-                        school_id: classData.school_id,
-                    }}
+                    initialData={classData}
                     classLevels={classLevels}
+                    submitStatus={submitStatus}
+                    isSubmitting={isSubmitting}
                 />
 
             )}
@@ -240,8 +268,10 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
             {isDeleteModalOpen && classData && (
                 <DeleteClassModal
                     className={classData.name}
-                    onClose={() => setIsDeleteModalOpen(false)}
+                    onClose={() => {setIsDeleteModalOpen(false); setSubmitStatus(null);}}
                     onDelete={handleDelete}
+                    submitStatus={submitStatus}
+                    isSubmitting={isSubmitting}
                 />
             )}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
@@ -276,46 +306,52 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
 
                 {/* Buttons */}
                 <div className="flex justify-end space-x-2">
-                    <button
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ type: 'spring', stiffness: 300 }}
                         onClick={() => setIsEditModalOpen(true)}
                         className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-700"
                     >
                         Edit Class
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ type: 'spring', stiffness: 300 }}
                         onClick={() => setIsDeleteModalOpen(true)}
                         className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
                     >
                         Delete Class
-                    </button>
+                    </motion.button>
                 </div>
             </div>
             <div className="dark:bg-gray-800  mt-4">
                 <h1 className="text-2xl font-bold text-foreground mb-4 p-6">
                     Students Of {classData?.name} - <span className="opacity-60">{school?.name}</span>
                 </h1>
-            <DataTableFix
-                data={students}
-                columns={studentColumns}
-                hasSearch
-                showCheckbox={false}
+                <DataTableFix
+                    data={students}
+                    columns={studentColumns}
+                    hasSearch
+                    showCheckbox={false}
                 />
             </div>
 
 
         </div>
     );
-    
+
 }
 
 
 export default function ClassViewDetailPage() {
     const searchParams = useSearchParams();
-    const classId = searchParams.get("id");
+    const classId = searchParams.get("classId");
     const schoolId = searchParams.get("schoolId")
     return (
         <SuperLayout
-            navigation={{ icon: Presentation, baseHref: `/super-admin/classes/manage/view?id=${classId}&schoolId=${schoolId}`, title: "Class Details" }}
+            navigation={{ icon: Presentation, baseHref: `${BASE_URL}/classes/manage/view?classId=${classId}&schoolId=${schoolId});`, title: "Class Details" }}
             showGoPro={true}
             onLogout={() => console.log("Logged out")}
         >

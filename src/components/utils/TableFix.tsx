@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight, X, Eye, Pen, Trash2, Briefcase } from "lucide-react";
 import CircularLoader from "../widgets/CircularLoader";
+import { motion } from "framer-motion";
 
 // Interface générique pour les colonnes
 interface Column<T> {
@@ -51,22 +52,22 @@ const DataTableFix = <T extends Record<string, unknown>>({
         if (total <= 5) return [...Array(total)].map((_, i) => i + 1);
 
         const pages: (number | string)[] = [];
-      
+
         if (current > 2) pages.push(1);
-      
+
         if (current > 3) pages.push('...');
-      
+
         const start = Math.max(2, current - 1);
         const end = Math.min(total - 1, current + 1);
-      
+
         for (let i = start; i <= end; i++) {
-          pages.push(i);
+            pages.push(i);
         }
-      
+
         if (current < total - 2) pages.push('...');
-      
+
         if (current < total) pages.push(total);
-      
+
         return pages;
     };
 
@@ -230,7 +231,7 @@ const DataTableFix = <T extends Record<string, unknown>>({
                 return (
                     <button
                         onClick={() => action.onClick(row)}
-                        className="text-gray-500 hover:text-purple-500"
+                        className="text-gray-500 hover:text-teal"
                         title="Manage"
                     >
                         <Briefcase size={20} />
@@ -246,12 +247,15 @@ const DataTableFix = <T extends Record<string, unknown>>({
             {/* Bouton de suppression (affiché uniquement si des lignes sont sélectionnées) */}
             {selectedRows.length > 0 && (
                 <div className="mb-4">
-                    <button
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ type: 'spring', stiffness: 300 }}
                         className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
                         data-remove-items-id={deleteButtonKeys} // Utiliser les clés au lieu des IDs
                     >
                         {deleteButtonText}
-                    </button>
+                    </motion.button>
                 </div>
             )}
 
@@ -323,72 +327,72 @@ const DataTableFix = <T extends Record<string, unknown>>({
                             </div>
                         ) : (
                             <div className="min-w-max">
-                            <table className="w-full table-auto border-collapse">
-                                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
-                                    <tr className="bg-gray-50 dark:bg-gray-800 text-left text-sm font-semibold text-foreground p-3">
-                                        {showCheckbox && (  // Conditionally render checkbox column
-                                            <th className="px-4 py-3 w-12">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isAllSelected}
-                                                    onChange={handleSelectAll}
-                                                    className="h-4 w-4 text-teal border-gray-300 rounded"
-                                                />
-                                            </th>
-                                        )}
-                                        {columns.map((column, index) => (
-                                            <th key={index} className="px-4 py-3 w-max">
-                                                {column.header}
-                                            </th>
-                                        ))}
-                                        {actions.length > 0 && (
-                                            <th className="px-4 py-3 text-right w-32">Actions</th>
-                                        )}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {
-                                        currentData.map(({ row, key }, rowIndex) => (
-                                            <tr
-                                                key={key} // Utiliser la clé unique pour chaque ligne
-                                                className={`border-t border-gray-200 transition-colors duration-200 w-max ${selectedRows.includes(row)
-                                                    ? "bg-gray-50 dark:bg-gray-700 border-l-4 border-l-teal"
-                                                    : "hover:bg-gray-50 dark:hover:bg-gray-700"
-                                                    }`}
-                                            >
-                                                {showCheckbox && (  // Conditionally render checkbox for each row
-                                                    <td className="px-4 py-3 w-12">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedRows.includes(row)}
-                                                            onChange={() => handleRowSelection(row)}
-                                                            className="h-4 w-4 text-teal border-gray-300 rounded cursor-pointer"
-                                                        />
-                                                    </td>
-                                                )}
-                                                {columns.map((column, colIndex) => (
-                                                    <td key={colIndex} className="px-4 py-3 text-sm text-foreground">
-                                                        {typeof column.accessor === "function"
-                                                            ? column.accessor(row)
-                                                            : row[column.accessor] as React.ReactNode}
-                                                    </td>
-                                                ))}
-                                                {actions.length > 0 && (
-                                                    <td className="px-4 py-3 text-right w-32">
-                                                        <div className="flex justify-end space-x-2">
-                                                            {actions.map((action, actionIndex) => (
-                                                                <React.Fragment key={actionIndex}>
-                                                                    {getActionIcon(action, row)}
-                                                                </React.Fragment>
-                                                            ))}
-                                                        </div>
-                                                    </td>
-                                                )}
-                                            </tr>
-                                        ))
-                                    }
-                                </tbody>
-                            </table>
+                                <table className="w-full table-auto border-collapse">
+                                    <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
+                                        <tr className="bg-gray-50 dark:bg-gray-800 text-left text-sm font-semibold text-foreground p-3">
+                                            {showCheckbox && (  // Conditionally render checkbox column
+                                                <th className="px-4 py-3 w-12">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isAllSelected}
+                                                        onChange={handleSelectAll}
+                                                        className="h-4 w-4 text-teal border-gray-300 rounded"
+                                                    />
+                                                </th>
+                                            )}
+                                            {columns.map((column, index) => (
+                                                <th key={index} className="px-4 py-3 w-max">
+                                                    {column.header}
+                                                </th>
+                                            ))}
+                                            {actions.length > 0 && (
+                                                <th className="px-4 py-3 text-right w-32">Actions</th>
+                                            )}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {
+                                            currentData.map(({ row, key }, rowIndex) => (
+                                                <tr
+                                                    key={key} // Utiliser la clé unique pour chaque ligne
+                                                    className={`border-t border-gray-200 transition-colors duration-200 w-max ${selectedRows.includes(row)
+                                                        ? "bg-gray-50 dark:bg-gray-700 border-l-4 border-l-teal"
+                                                        : "hover:bg-gray-50 dark:hover:bg-gray-700"
+                                                        }`}
+                                                >
+                                                    {showCheckbox && (  // Conditionally render checkbox for each row
+                                                        <td className="px-4 py-3 w-12">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedRows.includes(row)}
+                                                                onChange={() => handleRowSelection(row)}
+                                                                className="h-4 w-4 text-teal border-gray-300 rounded cursor-pointer"
+                                                            />
+                                                        </td>
+                                                    )}
+                                                    {columns.map((column, colIndex) => (
+                                                        <td key={colIndex} className="px-4 py-3 text-sm text-foreground">
+                                                            {typeof column.accessor === "function"
+                                                                ? column.accessor(row)
+                                                                : row[column.accessor] as React.ReactNode}
+                                                        </td>
+                                                    ))}
+                                                    {actions.length > 0 && (
+                                                        <td className="px-4 py-3 text-right w-32">
+                                                            <div className="flex justify-end space-x-2">
+                                                                {actions.map((action, actionIndex) => (
+                                                                    <React.Fragment key={actionIndex}>
+                                                                        {getActionIcon(action, row)}
+                                                                    </React.Fragment>
+                                                                ))}
+                                                            </div>
+                                                        </td>
+                                                    )}
+                                                </tr>
+                                            ))
+                                        }
+                                    </tbody>
+                                </table>
                             </div>
                         )}
 
@@ -434,8 +438,8 @@ const DataTableFix = <T extends Record<string, unknown>>({
                                             key={index}
                                             onClick={() => setCurrentPage(page)}
                                             className={`px-3 w-[40px] h-[40px] py-1 rounded-full text-sm hidden sm:block ${currentPage === page
-                                                    ? "focus:outline-none ring-2 ring-teal text-teal"
-                                                    : "text-foreground hover:ring-2 hover:ring-teal hover:text-teal"
+                                                ? "focus:outline-none ring-2 ring-teal text-teal"
+                                                : "text-foreground hover:ring-2 hover:ring-teal hover:text-teal"
                                                 }`}
                                         >
                                             {page}

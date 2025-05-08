@@ -19,9 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={bricolage.className}>
-        <ThemeInitializer/>
+        <ThemeInitializer />
         <AuthProvider>
-          {children}  
+            {children}
         </AuthProvider>
       </body>
     </html>

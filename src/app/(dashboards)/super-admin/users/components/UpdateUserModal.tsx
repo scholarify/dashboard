@@ -6,6 +6,10 @@ import { UserUpdateSchema } from "@/app/models/UserModel";
 import CustomInput from "@/components/inputs/CustomInput";
 import CustomPhoneInput from "@/components/inputs/CustomPhoneInput";
 import { SchoolSchema } from "@/app/models/SchoolModel";
+import SubmissionFeedback from "@/components/widgets/SubmissionFeedback";
+import CircularLoader from "@/components/widgets/CircularLoader";
+import SignalBarLoader from "@/components/widgets/SignalLoader";
+import { motion } from "framer-motion";
 
 interface UpdateUserModalProps {
     onClose: () => void;
@@ -13,6 +17,8 @@ interface UpdateUserModalProps {
     roles: string[];
     schools: SchoolSchema[];
     initialData?: UserUpdateSchema;
+    submitStatus: "success" | "failure" | null;
+    isSubmitting: boolean;
 }
 
 const UpdateUserModal: React.FC<UpdateUserModalProps> = ({
@@ -21,6 +27,8 @@ const UpdateUserModal: React.FC<UpdateUserModalProps> = ({
     roles,
     schools,
     initialData,
+    submitStatus,
+    isSubmitting,
 }) => {
     // Default form data with phone as an empty string to ensure it's always a string
     const [formData, setFormData] = useState<UserUpdateSchema>({
@@ -78,7 +86,6 @@ const UpdateUserModal: React.FC<UpdateUserModalProps> = ({
             address: formData.address,
             school_ids: formData.school_ids || [],
         });
-        onClose();
     };
 
     const filteredSchools = (schools || [])
@@ -89,7 +96,7 @@ const UpdateUserModal: React.FC<UpdateUserModalProps> = ({
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-md mx-4 sm:mx-6 md:mx-0 p-6 relative">
+            <div className="max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-md mx-4 sm:mx-6 md:mx-0 p-6 relative custom-scrollbar">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-lg font-semibold text-foreground">
                         {initialData ? "Edit User" : "Add New User"}
@@ -98,155 +105,178 @@ const UpdateUserModal: React.FC<UpdateUserModalProps> = ({
                         <X size={20} />
                     </button>
                 </div>
+                {submitStatus ? (
+                    <SubmissionFeedback status={submitStatus}
+                        message={
+                            submitStatus === "success"
+                                ? "User has been updated Successfully!"
+                                : "There was an error updating this user. Try again and if this persist contact support!"
+                        } />
+                ) : (<>
+                    <form onSubmit={handleSubmit}>
+                        {/* Full Name */}
+                        <CustomInput
+                            label="Full Name"
+                            id="fullName"
+                            name="name"
+                            value={formData.name || ""} // Ensure it's a string
+                            onChange={handleChange}
+                            required
+                        />
 
-                <form onSubmit={handleSubmit}>
-                    {/* Full Name */}
-                    <CustomInput
-                        label="Full Name"
-                        id="fullName"
-                        name="name"
-                        value={formData.name || ""} // Ensure it's a string
-                        onChange={handleChange}
-                        required
-                    />
+                        <CustomInput
+                            label="Email"
+                            id="email"
+                            name="email"
+                            value={formData.email || ""} // Ensure it's a string
+                            onChange={handleChange}
+                            required
+                        />
 
-                    <CustomInput
-                        label="Email"
-                        id="email"
-                        name="email"
-                        value={formData.email || ""} // Ensure it's a string
-                        onChange={handleChange}
-                        required
-                    />
+                        <CustomInput
+                            label="Password"
+                            id="password"
+                            name="password"
+                            type="password"
+                            value={formData.password || ""} // Ensure it's a string
+                            onChange={handleChange}
+                            required={!initialData} // Only required if not editing
+                        />
 
-                    <CustomInput
-                        label="Password"
-                        id="password"
-                        name="password"
-                        type="password"
-                        value={formData.password || ""} // Ensure it's a string
-                        onChange={handleChange}
-                        required={!initialData} // Only required if not editing
-                    />
+                        {/* Phone */}
+                        <CustomPhoneInput
+                            label="Phone Number"
+                            id="phone"
+                            name="phone"
+                            value={formData.phone || ""} // Ensure it's a string
+                            onChange={handleChange}
+                            countryCode={countryCode}
+                            onCountryCodeChange={(e) => setCountryCode(e.target.value)}
+                            required
+                        />
 
-                    {/* Phone */}
-                    <CustomPhoneInput
-                        label="Phone Number"
-                        id="phone"
-                        name="phone"
-                        value={formData.phone || ""} // Ensure it's a string
-                        onChange={handleChange}
-                        countryCode={countryCode}
-                        onCountryCodeChange={(e) => setCountryCode(e.target.value)}
-                        required
-                    />
+                        {/* Address */}
+                        <CustomInput
+                            label="Address"
+                            id="address"
+                            name="address"
+                            value={formData.address || ""} // Ensure it's a string
+                            onChange={handleChange}
+                            required
+                        />
 
-                    {/* Address */}
-                    <CustomInput
-                        label="Address"
-                        id="address"
-                        name="address"
-                        value={formData.address || ""} // Ensure it's a string
-                        onChange={handleChange}
-                        required
-                    />
-
-                    {/* School and Role (Flex Row) */}
-                    <div className="mb-4 flex flex-wrap gap-4">
-                        {/* Role Dropdown */}
-                        <div className="flex-1">
-                            <label className="block text-sm mb-1">Role</label>
-                            <select
-                                name="role"
-                                value={formData.role || ""} // Ensure it's a string
-                                onChange={handleChange}
-                                className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
-                                required
-                            >
-                                <option value="">Select role</option>
-                                {roles.map((role) => (
-                                    <option key={role} value={role}>
-                                        {role}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* School (Searchable Checkboxes Dropdown) */}
-                        <div className="relative flex-1">
-                            <label className="block text-sm mb-1">Schools</label>
-                            <div
-                                onClick={() => setShowSchoolDropdown((prev) => !prev)}
-                                className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-700 bg-white dark:text-white cursor-pointer flex items-center justify-between"
-                            >
-                                <span>
-                                    {(formData.school_ids?.length ?? 0) > 0
-                                        ? schools
-                                            .filter((school) => formData.school_ids?.includes(school._id))
-                                            .map((school) => school.name)
-                                            .join(", ")
-                                        : "Select schools"}
-                                </span>
-                                <ChevronDown className="w-4 h-4 text-gray-500" />
+                        {/* School and Role (Flex Row) */}
+                        <div className="mb-4 flex flex-wrap gap-4">
+                            {/* Role Dropdown */}
+                            <div className="flex-1">
+                                <label className="block text-sm mb-1">Role</label>
+                                <select
+                                    name="role"
+                                    value={formData.role || ""} // Ensure it's a string
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
+                                    required
+                                >
+                                    <option value="">Select role</option>
+                                    {roles.map((role) => (
+                                        <option key={role} value={role}>
+                                            {role}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
-                            {showSchoolDropdown && (
-                                <div className="absolute z-10 bg-white dark:bg-gray-700 w-full mt-1 rounded-md border max-h-48 overflow-y-auto p-2 shadow-lg">
-                                    <input
-                                        type="text"
-                                        placeholder="Search school..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full mb-2 px-2 py-1 border rounded-md text-sm dark:bg-gray-600"
-                                    />
-
-                                    {filteredSchools.length > 0 ? (
-                                        filteredSchools.map((school) => (
-                                            <label
-                                                key={school._id}
-                                                className="flex items-center gap-2 px-2 py-1 text-sm"
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={(formData.school_ids ?? []).includes(school._id)}
-                                                    onChange={(e) => {
-                                                        const isChecked = e.target.checked;
-                                                        setFormData((prev) => ({
-                                                            ...prev,
-                                                            school_ids: isChecked
-                                                                ? [...(prev.school_ids ?? []), school._id] // Ensure school_ids is always an array
-                                                                : (prev.school_ids ?? []).filter((id) => id !== school._id), // Fallback to empty array if undefined
-                                                        }));
-                                                    }}
-                                                />
-                                                {school.name}
-                                            </label>
-                                        ))
-                                    ) : (
-                                        <p className="text-sm text-gray-500">No schools found</p>
-                                    )}
+                            {/* School (Searchable Checkboxes Dropdown) */}
+                            <div className="relative flex-1">
+                                <label className="block text-sm mb-1">Schools</label>
+                                <div
+                                    onClick={() => setShowSchoolDropdown((prev) => !prev)}
+                                    className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-700 bg-white dark:text-white cursor-pointer flex items-center justify-between"
+                                >
+                                    <span>
+                                        {(formData.school_ids?.length ?? 0) > 0
+                                            ? schools
+                                                .filter((school) => formData.school_ids?.includes(school._id))
+                                                .map((school) => school.name)
+                                                .join(", ")
+                                            : "Select schools"}
+                                    </span>
+                                    <ChevronDown className="w-4 h-4 text-gray-500" />
                                 </div>
-                            )}
-                        </div>
-                    </div>
 
-                    {/* Actions */}
-                    <div className="flex justify-end space-x-2 mt-6">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600"
-                        >
-                            Update
-                        </button>
-                    </div>
-                </form>
+                                {showSchoolDropdown && (
+                                    <div className="absolute z-10 bg-white dark:bg-gray-700 w-full mt-1 rounded-md border max-h-48 overflow-y-auto p-2 shadow-lg">
+                                        <input
+                                            type="text"
+                                            placeholder="Search school..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="w-full mb-2 px-2 py-1 border rounded-md text-sm dark:bg-gray-600"
+                                        />
+
+                                        {filteredSchools.length > 0 ? (
+                                            filteredSchools.map((school) => (
+                                                <label
+                                                    key={school._id}
+                                                    className="flex items-center gap-2 px-2 py-1 text-sm"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={(formData.school_ids ?? []).includes(school._id)}
+                                                        onChange={(e) => {
+                                                            const isChecked = e.target.checked;
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                school_ids: isChecked
+                                                                    ? [...(prev.school_ids ?? []), school._id] // Ensure school_ids is always an array
+                                                                    : (prev.school_ids ?? []).filter((id) => id !== school._id), // Fallback to empty array if undefined
+                                                            }));
+                                                        }}
+                                                    />
+                                                    {school.name}
+                                                </label>
+                                            ))
+                                        ) : (
+                                            <p className="text-sm text-gray-500">No schools found</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex justify-end space-x-2 mt-6">
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                transition={{ type: 'spring', stiffness: 300 }}
+                                type="button"
+                                onClick={onClose}
+                                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
+                            >
+                                Cancel
+                            </motion.button>
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                transition={{ type: 'spring', stiffness: 300 }}
+                                type="submit"
+                                className={`px-4 py-2 rounded-md flex items-center gap-2 ${isSubmitting ? "bg-gray-500 cursor-not-allowed" : "bg-teal text-white hover:bg-teal-600"
+                                    }`}
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <CircularLoader size={18} color="teal-500" />
+                                        Updating...
+                                    </>
+                                ) : (
+                                    "Update"
+                                )}
+                            </motion.button>
+                        </div>
+                    </form>
+                </>)}
             </div>
         </div>
     );

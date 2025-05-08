@@ -5,12 +5,17 @@ import { X } from "lucide-react";
 import { ClassLevelSchema } from "@/app/models/ClassLevel";
 import CustomInput from "@/components/inputs/CustomInput";
 import { ClassSchema } from "@/app/models/ClassModel";
+import { motion } from "framer-motion";
+import CircularLoader from "@/components/widgets/CircularLoader";
+import SubmissionFeedback from "@/components/widgets/SubmissionFeedback";
 
 interface UpdateClassModalProps {
   onClose: () => void;
-  onSave: (data: ClassSchema) => void;
+  onSave: (data: ClassSchema) => Promise<void>;
   initialData?: ClassSchema;
   classLevels: ClassLevelSchema[];  // Full list of class levels passed as prop
+  submitStatus: "success" | "failure" | null;
+  isSubmitting: boolean;
 }
 
 const UpdateClassModal: React.FC<UpdateClassModalProps> = ({
@@ -18,6 +23,8 @@ const UpdateClassModal: React.FC<UpdateClassModalProps> = ({
   onSave,
   initialData,
   classLevels,
+  submitStatus,
+  isSubmitting,
 }) => {
   const [formData, setFormData] = useState<ClassSchema>({
     _id: "",
@@ -40,7 +47,7 @@ const UpdateClassModal: React.FC<UpdateClassModalProps> = ({
       });
     }
   }, [initialData]);
-  console.log("classLevel:", classLevels);
+ 
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -52,7 +59,6 @@ const UpdateClassModal: React.FC<UpdateClassModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);  // Save the form data
-    onClose();  // Close the modal after saving
   };
 
   return (
@@ -65,67 +71,90 @@ const UpdateClassModal: React.FC<UpdateClassModalProps> = ({
             <X size={20} />
           </button>
         </div>
-
-        <form onSubmit={handleSubmit}>
-          {/* Class Name */}
-          <CustomInput
-            label="Class Name"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-
-          {/* Class Code */}
-          <CustomInput
-            label="Class Code"
-            id="class_code"
-            name="class_code"
-            value={formData.class_code}
-            onChange={handleChange}
-            required
-          />
-
-          {/* Class Level Dropdown */}
-          <div className="mb-4">
-            <label htmlFor="class_level" className="block text-sm mb-1">
-              Class Level
-            </label>
-            <select
-              name="class_level"
-              id="class_level"
-              value={formData.class_level}
+        {submitStatus ? (
+          <SubmissionFeedback status={submitStatus}
+            message={
+              submitStatus === "success"
+                ? "Class has been sent Successfully!"
+                : "There was an error updating this class. Try again and if this persist contact support!"
+            } />
+        ) : (<>
+          <form onSubmit={handleSubmit}>
+            {/* Class Name */}
+            <CustomInput
+              label="Class Name"
+              id="name"
+              name="name"
+              value={formData.name}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
               required
-            >
-              <option value="">Select level</option>
-              {classLevels.map((level) => (
-                <option key={level._id} value={level._id}>
-                  {level.name}
-                </option>
-              ))}
-            </select>
-          </div>
+            />
 
-          {/* Actions */}
-          <div className="flex justify-end space-x-2 mt-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600"
-            >
-              Update
-            </button>
-          </div>
-        </form>
+            {/* Class Code */}
+            <CustomInput
+              label="Class Code"
+              id="class_code"
+              name="class_code"
+              value={formData.class_code}
+              onChange={handleChange}
+              required
+            />
+
+            {/* Class Level Dropdown */}
+            <div className="mb-4">
+              <label htmlFor="class_level" className="block text-sm mb-1">
+                Class Level
+              </label>
+              <select
+                name="class_level"
+                id="class_level"
+                value={formData.class_level}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded-md text-sm dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
+                required
+              >
+                <option value="">Select level</option>
+                {classLevels.map((level) => (
+                  <option key={level._id} value={level._id}>
+                    {level.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end space-x-2 mt-6">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
+              >
+                Cancel
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+                type="submit"
+                className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600 flex items-center gap-2"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <CircularLoader size={18} color="teal-500" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update"
+                )}
+              </motion.button>
+            </div>
+          </form>
+        </>)}
+
       </div>
     </div>
   );

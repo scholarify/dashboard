@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 
 interface BreadcrumbsProps {
-  baseLabel?: string; // Default: "Home"
-  baseHref?: string; // Default: "/"
-  icon?: React.ElementType; // Optional custom icon for base
-  className?: string; // Custom styles for breadcrumbs
+  baseLabel?: string;
+  baseHref?: string;
+  icon?: React.ElementType;
+  className?: string;
 }
 
 const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
@@ -16,26 +16,35 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
   className = "",
 }) => {
   const pathname = usePathname();
-  const pathSegments = pathname.split("/").filter((segment) => segment);
+  const searchParams = useSearchParams();
 
-  // Skip the first segment (e.g., "super-admin")
-  const adjustedSegments = pathSegments.slice(1);
+  const pathSegments = pathname.split("/").filter(Boolean);
+  const adjustedSegments = pathSegments.slice(1); // Skip first if needed
+
+  const queryString = searchParams.toString();
+  const query = queryString ? `?${queryString}` : "";
 
   return (
-    <nav className={` flex items-center text-sm text-gray-600 dark:text-gray-300 ${className} p-2 border border-gray-300 rounded-md w-max`}>
-      {/* Base Link */}
-      <Link href={baseHref} className="flex items-center gap-1 text-foreground transition">
+    <nav
+      className={`flex items-center text-sm text-gray-600 dark:text-gray-300 ${className} p-2 border border-gray-300 rounded-md w-max`}
+    >
+      <Link
+        href={`${baseHref}${query}`}
+        className="flex items-center gap-1 text-foreground transition"
+      >
         {Icon && <Icon className="w-4 h-4" />}
       </Link>
 
-      {/* Dynamic Segments */}
       {adjustedSegments.map((segment, index) => {
-        const href = "/" + pathSegments.slice(0, index + 2).join("/");
+        const href = "/" + pathSegments.slice(0, index + 2).join("/") + query;
 
         return (
           <span key={href} className="flex items-center">
             <ChevronRight className="w-4 h-4 mx-2 text-foreground" />
-            <Link href={href} className="capitalize text-foreground transition border border-foreground rounded-full p-1">
+            <Link
+              href={href}
+              className="capitalize text-foreground transition border border-foreground rounded-full p-1"
+            >
               {decodeURIComponent(segment)}
             </Link>
           </span>

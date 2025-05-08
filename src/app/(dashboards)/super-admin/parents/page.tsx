@@ -10,13 +10,15 @@ import Link from 'next/link';
 import useAuth from '@/app/hooks/useAuth';
 import DataTableFix from '@/components/utils/TableFix';
 import { getSchools } from '@/app/services/SchoolServices';
-import { createInvitation, getInvitations } from '@/app/services/InvitationServices';
+import { createInvitation, deleteInvitation, getInvitations } from '@/app/services/InvitationServices';
 import { getStudents } from '@/app/services/StudentServices'; // Add this to fetch students
 import { SchoolSchema } from '@/app/models/SchoolModel';
 import { InvitationCreateSchema, InvitationSchema } from '@/app/models/Invitation';
 import { StudentSchema } from '@/app/models/StudentModel'; // Assuming you have this
 import CreateInvitationModal from './components/CreateInviteModal';
 import NotificationCard from '@/components/NotificationCard';
+import DeleteInviteModal from './components/DeleteInviteModal';
+import { verifyPassword } from '@/app/services/UserServices';
 
 export default function Page() {
     const BASE_URL = "/super-admin";
@@ -39,10 +41,13 @@ export default function Page() {
         const [notificationType, setNotificationType] = useState("success");
         const [isSubmitting, setIsSubmitting] = useState(false);
         const [submitStatus, setSubmitStatus] = useState<"success" | "failure" | null>(null);
+        const [invitationToDelete, setinvitationToDelete] = useState<InvitationSchema | null>(null);
+        const { user } = useAuth();
 
         console.log("Invitations:", invitations);
         // console.log("Schools invi view:", schools);
         // console.log("Students invi view:", students);
+
         useEffect(() => {
             const fetchData = async () => {
                 setLoadingData(true);
@@ -115,6 +120,12 @@ export default function Page() {
                     router.push(`${BASE_URL}/parents/view?id=${invite._id}`);
                 },
             },
+            {
+                label: "Delete",
+                onClick: (inv: InvitationSchema) => {
+                    setinvitationToDelete(inv);
+                },
+            },
         ];
         const handleSaveInvitation = async (invitationData: InvitationCreateSchema) => {
             //console.log("Invitation Data:", invitationData);
@@ -133,16 +144,16 @@ export default function Page() {
                 }
                 const data = await createInvitation(newInvitation)
                 if (data) {
+
                     const [fetchedInvitations, fetchedSchools, fetchedStudents] = await Promise.all([
                         getInvitations(),
                         getSchools(),
                         getStudents(),
                     ]);
-
+            
                     setInvitations(fetchedInvitations);
                     setSchools(fetchedSchools);
                     setStudents(fetchedStudents);
-
                     setSubmitStatus("success");                 // ✅ update success
                     setNotificationMessage("Invitation created successfully!");
                     setNotificationType("success");
@@ -152,7 +163,7 @@ export default function Page() {
                     setTimeout(() => {
                         setIsModalOpen(false);
                         setSubmitStatus(null); // reset
-                    }, 4000);
+                    }, 10000);
                 }
             } catch (error) {
                 console.error("Error creating Invitation:", error);
@@ -172,6 +183,73 @@ export default function Page() {
                 setLoadingData(false);
             }
         };
+
+        const handeDeleteInvitation = async (password: string) => {
+            setIsSubmitting(true);
+            setSubmitStatus(null);
+            setLoadingData(true);
+        
+            if (!invitationToDelete || !user) {
+                return;
+            }
+        
+            const passwordVerified = await verifyPassword(password, user.email);
+            if (!passwordVerified) {
+                setNotificationMessage("Invalid Password!");
+                setNotificationType("error");
+                setIsNotificationCard(true);
+        
+                // ✅ Fix: Reset loading/submitting states even when password fails
+                setIsSubmitting(false);
+                setLoadingData(false);
+                setSubmitStatus("failure");
+                setTimeout(() => {
+                    setinvitationToDelete(null); // ✅ Close delete modal properly
+                    setSubmitStatus(null);
+                }, 10000);
+                return;
+            }
+        
+            try {
+                await deleteInvitation(invitationToDelete._id);
+
+                const [fetchedInvitations, fetchedSchools, fetchedStudents] = await Promise.all([
+                    getInvitations(),
+                    getSchools(),
+                    getStudents(),
+                ]);
+        
+                setInvitations(fetchedInvitations);
+                setSchools(fetchedSchools);
+                setStudents(fetchedStudents);
+                setSubmitStatus("success");
+                setNotificationMessage("Invitation Deleted successfully!");
+                setNotificationType("success");
+                setIsNotificationCard(true);
+        
+                setTimeout(() => {
+                    setinvitationToDelete(null); // ✅ Close delete modal properly
+                    setSubmitStatus(null);
+                }, 10000);
+            } catch (error) {
+                console.error("Error Deleting Invitation:", error);
+        
+                setSubmitStatus("failure");
+                const errorMessage =
+                    error instanceof Error
+                        ? error.message
+                        : "An unknown error occurred while deleting the invitation.";
+        
+                setNotificationMessage(errorMessage);
+                setNotificationType("error");
+                setIsNotificationCard(true);
+            } finally {
+                setIsSubmitting(false);
+                setLoadingData(false);
+            }
+        };
+        
+
         return (
             <div className="">
                 {isNotificationCard && (
@@ -190,7 +268,7 @@ export default function Page() {
                         isFixed={true}
                     />
                 )}
-                <div className="flex justify-end mb-4">
+                <div className="flex justify-start mb-4">
                     <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -203,8 +281,17 @@ export default function Page() {
                 </div>
                 {isModalOpen && (
                     <CreateInvitationModal
-                        onClose={() => setIsModalOpen(false)}
+                        onClose={() => {setIsModalOpen(false); setSubmitStatus(null); }}
                         onSave={handleSaveInvitation}
+                        submitStatus={submitStatus}
+                        isSubmitting={isSubmitting}
+                    />
+                )}
+                {invitationToDelete && (
+                    <DeleteInviteModal
+                        className={invitationToDelete.name || ""}
+                        onClose={() => {setinvitationToDelete(null); setSubmitStatus(null); }}
+                        onDelete={handeDeleteInvitation}
                         submitStatus={submitStatus}
                         isSubmitting={isSubmitting}
                     />

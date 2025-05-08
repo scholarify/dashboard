@@ -2,17 +2,24 @@
 
 import React, { useState } from "react";
 import { X } from "lucide-react";
+import CircularLoader from "@/components/widgets/CircularLoader";
+import { motion } from "framer-motion";
+import SubmissionFeedback from "@/components/widgets/SubmissionFeedback";
 
 interface DeleteClassModalProps {
   className: string;
   onClose: () => void;
   onDelete: (password: string) => void;
+  submitStatus: "success" | "failure" | null;
+  isSubmitting: boolean;
 }
 
 const DeleteClassModal: React.FC<DeleteClassModalProps> = ({
   className,
   onClose,
   onDelete,
+  submitStatus,
+  isSubmitting,
 }) => {
   const [password, setPassword] = useState("");
 
@@ -23,7 +30,6 @@ const DeleteClassModal: React.FC<DeleteClassModalProps> = ({
       return;
     }
     onDelete(password);
-    onClose();
   };
 
   return (
@@ -36,9 +42,16 @@ const DeleteClassModal: React.FC<DeleteClassModalProps> = ({
             <X size={20} />
           </button>
         </div>
-
-        {/* Confirmation Message */}
-        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+        {submitStatus ? (
+          <SubmissionFeedback status={submitStatus}
+            message={
+              submitStatus === "success"
+                ? "Class has been Deleted Successfully!"
+                : "There was an error deleting this class. Try again and if this persist contact support!"
+            } />
+        ) : (<>
+         {/* Confirmation Message */}
+         <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
           Are you sure you want to delete the class{" "}
           <strong className="font-semibold text-red-500">{className}</strong>? This action is
           <span className="font-semibold"> irreversible</span>.
@@ -59,21 +72,37 @@ const DeleteClassModal: React.FC<DeleteClassModalProps> = ({
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-2">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 300 }}
               type="button"
               onClick={onClose}
               className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
             >
               Cancel
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 300 }}
               type="submit"
-              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center gap-2"
+              disabled={isSubmitting}
             >
-              Delete
-            </button>
+              {isSubmitting ? (
+                <>
+                  <CircularLoader size={18} color="teal-500" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </motion.button>
           </div>
         </form>
+        </>
+        )}
       </div>
     </div>
   );

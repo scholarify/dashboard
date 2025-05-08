@@ -16,6 +16,7 @@ import { getSchools } from '@/app/services/SchoolServices';
 import Link from 'next/link';
 import useAuth from '@/app/hooks/useAuth';
 import DataTableFix from '@/components/utils/TableFix';
+import { motion } from 'framer-motion';
 
 export default function Page() {
   const BASE_URL = "/super-admin";
@@ -39,24 +40,26 @@ export default function Page() {
     const [isNotificationCard, setIsNotificationCard] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState("");
     const [notificationType, setNotificationType] = useState("success")
-    const {user} = useAuth();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitStatus, setSubmitStatus] = useState<"success" | "failure" | null>(null);
+    const { user } = useAuth();
 
-    console.log("array of selected users:",selectedUsers)
-
+    console.log("array of selected users:", selectedUsers)
+    const fetchSchools = async () => {
+      setLoadingData(true);
+      try {
+        const fetchedUsers = await getUsers();
+        const fetchedSchools = await getSchools();
+        setSchools(fetchedSchools);
+        setUsers(fetchedUsers);
+      } catch (error) {
+        console.error("Error fetching schools or User:", error);
+      } finally {
+        setLoadingData(false);
+      }
+    };
     useEffect(() => {
-      const fetchSchools = async () => {
-        setLoadingData(true);
-        try {
-          const fetchedUsers = await getUsers();
-          const fetchedSchools = await getSchools();
-          setSchools(fetchedSchools);
-          setUsers(fetchedUsers);
-        } catch (error) {
-          console.error("Error fetching schools or User:", error);
-        } finally {
-          setLoadingData(false);
-        }
-      };
+
       fetchSchools();
     }, []);
     //console.log(schools)
@@ -108,6 +111,8 @@ export default function Page() {
       : users.filter(user => user.role === selectedRole);
 
     const handleSaveUser = async (userData: UserCreateSchema) => {
+      setIsSubmitting(true);         // Start submitting
+      setSubmitStatus(null);
       setLoadingData(true); // Set loading state to true when starting the process
       try {
         const newUser: UserCreateSchema = {
@@ -127,55 +132,57 @@ export default function Page() {
 
         if (data) {
           // Assuming 'data' contains the newly created user, so we use it directly
-          const createdUser: UserSchema = {
-            _id:data._id,
-            user_id: data.user_id,  // Example: Assuming the response has a `user_id`
-            firebaseUid: data.firebaseUid,
-            name: data.name,
-            email: data.email,
-            role: data.role,
-            phone: data.phone,
-            address: data.address,
-            school_ids: data.school_ids,
-            isVerified: data.isVerified,
-            avatar: data.avatar,
-            lastActive: data.lastActive,
-            createdAt: data.createdAt,
-            updatedAt: data.updatedAt,
-          };
+          fetchSchools(); // Refresh the list of users after creating a new one
 
-          // Update the users list with the newly created user
-          setUsers((prev) => [...prev, createdUser]);
-           
           // Display success message
+          setSubmitStatus("success");
           setNotificationMessage("User created successfully!");
           setIsNotificationCard(true);
           setNotificationType("success");
+          setTimeout(() => {
+            setIsModalOpen(false);
+            setSubmitStatus(null); // reset
+          }, 10000);
         }
       } catch (error) {
         console.error("Error creating user:", error);
-
+        setSubmitStatus("failure");
         // Capture the error message from the error object or use a default one
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred while creating the user.";
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "An unknown error occurred while creating this user.";
+
         setNotificationMessage(errorMessage);
-        setIsNotificationCard(true);
         setNotificationType("error");
+        setIsNotificationCard(true);
       } finally {
         setLoadingData(false); // Reset loading state
-        // Optionally close the modal after the operation is complete
-        // setIsModalOpen(false); 
+        setIsSubmitting(false);                     // ✅ end submitting
+        setLoadingData(false);
       }
     };
 
 
 
     const handleDelete = async (password: string) => {
+      setIsSubmitting(true);
+      setSubmitStatus(null);
+      // setLoadingData(false);
       const passwordVerified = user ? await verifyPassword(password, user.email) : false;
       //console.log("passwordVerified", passwordVerified);
       if (!passwordVerified) {
         setNotificationMessage("Invalid Password!");
         setNotificationType("error");
         setIsNotificationCard(true);
+        // setLoadingData(false);
+        // ✅ Fix: Reset loading/submitting states even when password fails
+        setIsSubmitting(false);
+        setSubmitStatus("failure");
+        setTimeout(() => {
+          setUserToDelete(null); // ✅ Close delete modal properly
+          setSubmitStatus(null);
+        }, 10000);
         return;
       }
 
@@ -184,23 +191,35 @@ export default function Page() {
           // Call the API to delete the user from the backend
           await deleteUser(userToDelete.user_id); // Assuming user_id exists
 
-          // Update the frontend state to reflect the deletion
-          setUsers(users.filter((u) => u.user_id !== userToDelete.user_id));
-
+          fetchSchools(); // Refresh the list of users after deletion
+          setSubmitStatus("success");
           setNotificationMessage("User Deleted successfully!");
           setIsNotificationCard(true);
           setNotificationType("success");
-          setUserToDelete(null);
+
+          setTimeout(() => {
+            setUserToDelete(null); // ✅ Close delete modal properly
+            setSubmitStatus(null);
+          }, 10000);
         } catch (error) {
-          console.error("Error deleting user:", error);
-          const errorMessage = error instanceof Error ? error.message : "Error deleting user:";
+          console.error("Error Deleting Invitation:", error);
+
+          setSubmitStatus("failure");
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "An unknown error occurred while deleting the invitation.";
+
           setNotificationMessage(errorMessage);
-          setIsNotificationCard(true);
           setNotificationType("error");
+          setIsNotificationCard(true);
+        } finally {
+          setIsSubmitting(false);                     // ✅ end submitting
+          // setLoadingData(false);
         }
       }
     };
-    
+
     // Gérer la suppression multiple
     const handleDeleteSelected = () => {
       if (selectedUsers.length === 0) {
@@ -235,19 +254,24 @@ export default function Page() {
 
         }
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 300 }}
             onClick={() => setIsModalOpen(true)}
             className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600"
           >
             Add New User
-          </button>
+          </motion.button>
 
           {isModalOpen && (
             <CreateUserModal
-              onClose={() => setIsModalOpen(false)}
+              onClose={() => { setIsModalOpen(false); setSubmitStatus(null); }}
               onSave={handleSaveUser}
               roles={roles.filter(role => role !== "All")}
               schools={schools}
+              isSubmitting={isSubmitting}
+              submitStatus={submitStatus}
             />
           )}
           {isDeleteUserModalOpen && userToDelete && (
@@ -258,6 +282,8 @@ export default function Page() {
                 setUserToDelete(null);
               }}
               onDelete={handleDelete}
+              isSubmitting={isSubmitting}
+              submitStatus={submitStatus}
             />
           )}
 

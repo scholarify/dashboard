@@ -2,17 +2,25 @@
 
 import React, { useState } from "react";
 import { X } from "lucide-react";
+import SubmissionFeedback from "@/components/widgets/SubmissionFeedback";
+import { motion } from "framer-motion";
+import CircularLoader from "@/components/widgets/CircularLoader";
+
 
 interface DeleteUserModalProps {
   userName: string;
   onClose: () => void;
   onDelete: (password: string) => void;
+  submitStatus: "success" | "failure" | null;
+  isSubmitting: boolean;
 }
 
 const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
   userName,
   onClose,
   onDelete,
+  submitStatus,
+  isSubmitting,
 }) => {
   const [password, setPassword] = useState("");
 
@@ -23,7 +31,6 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
       return;
     }
     onDelete(password);
-    onClose();
   };
 
   return (
@@ -36,42 +43,65 @@ const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
             <X size={20} />
           </button>
         </div>
+        {submitStatus ? (
+          <SubmissionFeedback status={submitStatus}
+            message={
+              submitStatus === "success"
+                ? "User has been Deleted Successfully!"
+                : "There was an error deleting this User. Try again and if this persist contact support!"
+            } />
+        ) : (<>
+          {/* Confirmation Message */}
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+            Are you sure you want to delete user <strong className="font-semibold text-red-500">{userName}?</strong> This action is irreversible and will permanently remove the user's data.
+          </p>
 
-        {/* Confirmation Message */}
-        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-          Are you sure you want to delete user <strong className="font-semibold text-red-500">{userName}?</strong> This action is irreversible and will permanently remove the user's data.
-        </p>
+          {/* Password Input */}
+          <form onSubmit={handleDelete}>
+            <div className="mb-6">
+              <input
+                type="password"
+                placeholder="Type password to confirm delete"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-red-300 dark:border-red-500 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                required
+              />
+            </div>
 
-        {/* Password Input */}
-        <form onSubmit={handleDelete}>
-          <div className="mb-6">
-            <input
-              type="password"
-              placeholder="Type password to confirm delete"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-red-300 dark:border-red-500 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-              required
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-            >
-              Delete
-            </button>
-          </div>
-        </form>
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
+              >
+                Cancel
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+                type="submit"
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center gap-2"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <CircularLoader size={18} color="teal-500" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete"
+                )}
+              </motion.button>
+            </div>
+          </form>
+        </>)}
       </div>
     </div>
   );

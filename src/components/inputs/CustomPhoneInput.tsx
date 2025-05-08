@@ -9,6 +9,7 @@ interface CustomPhoneInputProps {
   countryCode: string;
   onCountryCodeChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   required?: boolean;
+  disabled?: boolean; // Assuming you want to keep it enabled; change as needed
 }
 
 const CustomPhoneInput: React.FC<CustomPhoneInputProps> = ({
@@ -20,6 +21,7 @@ const CustomPhoneInput: React.FC<CustomPhoneInputProps> = ({
   countryCode,
   onCountryCodeChange,
   required = false,
+  disabled = false, // Assuming you want to keep it enabled; change as needed
 }) => {
   return (
     <div className="mb-4">
@@ -30,7 +32,9 @@ const CustomPhoneInput: React.FC<CustomPhoneInputProps> = ({
         <select
           value={countryCode}
           onChange={onCountryCodeChange}
-          className="appearance-none bg-transparent py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
+          disabled={disabled}
+          className={`appearance-none py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal
+            ${disabled ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-50' : 'bg-transparent'}`}
         >
           <option value="+237" className="text-sm">🇨🇲 +237</option> {/* Adjusted CMR */}
           <option value="+44" className="text-sm">🇬🇧 +44</option>
@@ -44,8 +48,10 @@ const CustomPhoneInput: React.FC<CustomPhoneInputProps> = ({
           value={value}
           onChange={onChange}
           placeholder="000 000 0000"
-          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal"
+          className={`flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-foreground dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal
+            ${disabled ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-50' : ''}`}
           required={required}
+          disabled={disabled} // Assuming you want to keep it enabled; change as needed
         />
       </div>
     </div>
