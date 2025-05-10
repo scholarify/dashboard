@@ -16,6 +16,7 @@ import { createSchool, deleteSchool, getSchools } from "@/app/services/SchoolSer
 import Link from "next/link";
 import NotificationCard from "@/components/NotificationCard";
 import { verifyPassword } from "@/app/services/UserServices";
+import { motion } from "framer-motion";
 
 
 const BASE_URL = "/super-admin";
@@ -32,7 +33,7 @@ function SchoolContent() {
   const router = useRouter();
   const [schools, setSchools] = useState<SchoolSchema[]>([]);
   const [loadingData, setLoadingData] = useState(false);
-  const {user} = useAuth();
+  const { user } = useAuth();
   const fetchSchools = async () => {
     setLoadingData(true);
     try {
@@ -47,17 +48,20 @@ function SchoolContent() {
   useEffect(() => {
     fetchSchools();
   }, []);
-  
+
   const [selectedSchools, setSelectedSchools] = useState<SchoolSchema[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // État pour le modal de suppression
   const [schoolToDelete, setSchoolToDelete] = useState<SchoolSchema | null>(null); // École à supprimer
-  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<"success" | "failure" | null>(null);
   const [isNotificationCard, setIsNotificationCard] = useState(false);
   const [notificationCard, setNotificationCard] = useState({
     message: "",
     type: "",
   });
+  const [notificationMessage, setNotificationMessage] = useState("");
+  const [notificationType, setNotificationType] = useState("success");
 
   // Colonnes du tableau
   const columns = [
@@ -73,35 +77,54 @@ function SchoolContent() {
 
   // Gérer la suppression d'une école
   const handleDelete = async (password: string) => {
+    setIsSubmitting(true);
+    setSubmitStatus(null);
     // Simuler une vérification de mot de passe (dans un vrai projet, fais une requête API)
     const passwordVerified = user ? await verifyPassword(password, user.email) : false;
-    console.log("passwordVerified", passwordVerified);
+    //console.log("passwordVerified", passwordVerified);
     if (!passwordVerified) {
-      setNotificationCard({
-        message: "Invalid password. Please try again.",
-        type: "error",
-      });
+      setNotificationMessage("Invalid Password!");
+      setNotificationType("error");
       setIsNotificationCard(true);
+
+      // ✅ Fix: Reset loading/submitting states even when password fails
+      setIsSubmitting(false);
+      setSubmitStatus("failure");
+      setTimeout(() => {
+        setSchoolToDelete(null); // ✅ Close delete modal properly
+        setSubmitStatus(null);
+      }, 10000);
       return;
     }
-    if (schoolToDelete) {
-      if (schoolToDelete?.school_id) {
-        const deleted = await deleteSchool(schoolToDelete.school_id);
-        if (deleted) {
-          fetchSchools();
-          setNotificationCard({
-            message: "School deleted successfully",
-            type: "success",
-          });
-          setIsNotificationCard(true);
-        }
-      } else {
-        setNotificationCard({
-          message: "Failed to delete school. Please try again.",
-          type: "error",
-        });
+    try {
+      if (schoolToDelete) {
+        await deleteSchool(schoolToDelete.school_id);
+        fetchSchools();
+        setSubmitStatus("success");
+        setNotificationMessage("School Deleted successfully!");
+        setNotificationType("success");
         setIsNotificationCard(true);
+
+        setTimeout(() => {
+          setSchoolToDelete(null); // ✅ Close delete modal properly
+          setSubmitStatus(null);
+        }, 10000);
       }
+    } catch (error) {
+      console.error("Error Deleting School:", error);
+
+      setSubmitStatus("failure");
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An unknown error occurred while deleting the School.";
+
+      setNotificationMessage(errorMessage);
+      setNotificationType("error");
+      setIsNotificationCard(true);
+    } finally {
+      setIsSubmitting(false);
+      // setLoadingData(false);
     }
   };
 
@@ -126,28 +149,30 @@ function SchoolContent() {
   // Gérer la suppression multiple
   const handleDeleteSelected = () => {
     if (selectedSchools.length === 0) {
-    alert("Please select at least one school to delete.");
-    return;
-  }
+      alert("Please select at least one school to delete.");
+      return;
+    }
 
-  // Récupérer les clés des lignes sélectionnées depuis le bouton
-  const deleteButton = document.querySelector("[data-remove-items-id]");
-  const keysToDelete = deleteButton?.getAttribute("data-remove-items-id")?.split(",") || [];
+    // Récupérer les clés des lignes sélectionnées depuis le bouton
+    const deleteButton = document.querySelector("[data-remove-items-id]");
+    const keysToDelete = deleteButton?.getAttribute("data-remove-items-id")?.split(",") || [];
 
-  if (confirm(`Are you sure you want to delete ${selectedSchools.length} school(s)?`)) {
-    // Filtrer les écoles en utilisant les clés
-    const newSchools = schools.filter((school, index) => {
-      const key = school.id ? String(school.id) : `row-${index}`;
-      return !keysToDelete.includes(key);
-    });
-    setSchools(newSchools);
-    setSelectedSchools([]);
-  }
+    if (confirm(`Are you sure you want to delete ${selectedSchools.length} school(s)?`)) {
+      // Filtrer les écoles en utilisant les clés
+      const newSchools = schools.filter((school, index) => {
+        const key = school.id ? String(school.id) : `row-${index}`;
+        return !keysToDelete.includes(key);
+      });
+      setSchools(newSchools);
+      setSelectedSchools([]);
+    }
   };
 
   // Gérer l'ajout d'une nouvelle école
   const handleSave = async (schoolData: SchoolCreateSchema) => {
-    setLoadingData(true);
+    setIsSubmitting(true);         // Start submitting
+    setSubmitStatus(null);
+    // setLoadingData(true);
     try {
       const newSchool: SchoolCreateSchema = {
         name: schoolData.name,
@@ -161,30 +186,35 @@ function SchoolContent() {
       };
       const data = await createSchool(newSchool);
       if (data) {
-        const school: SchoolSchema = {
-          _id:data._id,
-          school_id: data.school_id,
-          name: data.name,
-          email: data.email,
-          principal_name: data.principal_name,
-          established_year: data.established_year,
-          address: data.address,
-          website: data.website,
-          phone_number: data.phone_number,
-          description: data.description,
-        };
-        setSchools((prev) => [...prev, school]);
-        setNotificationCard({
-          message: "School created successfully",
-          type: "success",
-        });
+        setSubmitStatus("success");                 // ✅ update success
+        setNotificationMessage("Invitation created successfully!");
+        setNotificationType("success");
         setIsNotificationCard(true);
+
+        // optional: close modal after delay
+        setTimeout(() => {
+          setIsModalOpen(false);
+          setSubmitStatus(null); // reset
+          fetchSchools();
+        }, 10000);
       }
     } catch (error) {
-      console.error("Error creating school:", error);
+      console.error("Error creating School:", error);
+
+      setSubmitStatus("failure");                  // ✅ update failure
+
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An unknown error occurred while creating the School.";
+
+      setNotificationMessage(errorMessage);
+      setNotificationType("error");
+      setIsNotificationCard(true);
 
     } finally {
-      setLoadingData(false);
+      setIsSubmitting(false);
+      // setLoadingData(false);
     }
 
   };
@@ -197,27 +227,27 @@ function SchoolContent() {
         <NotificationCard
           title="Notification"
           icon={
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z" stroke="#15803d " strokeWidth="1.5" stroke-linecap="round" strokeLinejoin="round" />
-              <path d="M7.75 11.9999L10.58 14.8299L16.25 9.16992" stroke="#15803d " strokeWidth="1.5" stroke-linecap="round" strokeLinejoin="round" />
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z" stroke="#15803d" strokeWidth="1.5" />
+              <path d="M7.75 11.9999L10.58 14.8299L16.25 9.16992" stroke="#15803d" strokeWidth="1.5" />
             </svg>
-
           }
-          message={notificationCard.message}
+          message={notificationMessage}
           onClose={() => setIsNotificationCard(false)}
-          type={notificationCard.type}
+          type={notificationType}
           isVisible={isNotificationCard}
           isFixed={true}
         />
-      )
-
-      }
-      <button
+      )}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        transition={{ type: 'spring', stiffness: 300 }}
         onClick={() => setIsModalOpen(true)}
         className="mb-4 px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600"
       >
         Add New School
-      </button>
+      </motion.button>
 
       <DataTableFix<SchoolSchema>
         columns={columns}
@@ -232,9 +262,11 @@ function SchoolContent() {
       {/* Modal pour ajouter une école */}
       {isModalOpen && (
         <CreateSchoolModal
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => { setIsModalOpen(false), fetchSchools(); setSubmitStatus(null); }}
           onSave={handleSave}
-          
+          isSubmitting={isSubmitting}
+          submitStatus={submitStatus}
+
         />
       )}
 
@@ -245,8 +277,12 @@ function SchoolContent() {
           onClose={() => {
             setIsDeleteModalOpen(false);
             setSchoolToDelete(null);
+            setSubmitStatus(null);
+            fetchSchools();
           }}
           onDelete={handleDelete}
+          isSubmitting={isSubmitting}
+          submitStatus={submitStatus}
         />
       )}
     </div>

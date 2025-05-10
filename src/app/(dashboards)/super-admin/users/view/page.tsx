@@ -88,64 +88,62 @@ function UserViewDetailContent() {
 
     // Handle user deletion
 
-    const handleDelete = async (password: string) => {
-        
-        setIsSubmitting(true);
-        setSubmitStatus(null);
-        // setLoadingData(true);
-        const passwordVerified = user ? await verifyPassword(password, user.email) : false;
-        //console.log("passwordVerified", passwordVerified);
-        if (!passwordVerified) {
-            setNotificationMessage("Invalid Password!");
-            setNotificationType("error");
-            setIsNotificationCard(true);
-
-            // ✅ Fix: Reset loading/submitting states even when password fails
-            setIsSubmitting(false);
-            // setLoadingData(false);
-            setSubmitStatus("failure");
-            setTimeout(() => {
-                setUserToDelete(null); // ✅ Close delete modal properly
-                setSubmitStatus(null);
-            }, 10000);
-            return;
-        }
-
-        if (userToDelete) {
-            try {
-                // Call the API to delete the user from the backend
-                await deleteUser(userToDelete.user_id); // Assuming user_id exists
-
-                // Update the frontend state to reflect the deletion
-                fetchData();
-                setSubmitStatus("success");
-                setNotificationMessage("User Deleted successfully!");
-                setNotificationType("success");
-                setIsNotificationCard(true);
-
-                setTimeout(() => {
-                    setUserToDelete(null); // ✅ Close delete modal properly
-                    setIsEditModalOpen(false);
-                    setSubmitStatus(null);    
-                }, 10000);
-            } catch (error) {
-                console.error("Error Deleting User:", error);
-
-                setSubmitStatus("failure");
-                const errorMessage =
-                    error instanceof Error
-                        ? error.message
-                        : "An unknown error occurred while deleting the user.";
-
-                setNotificationMessage(errorMessage);
-                setNotificationType("error");
-                setIsNotificationCard(true);
-            } finally {
-                setIsSubmitting(false);
-                // setLoadingData(false);
-            }
-        }
-    };
+     const handleDelete = async (password: string) => {
+       setIsSubmitting(true);
+       setSubmitStatus(null);
+       // setLoadingData(false);
+       if(!user) return;
+       const passwordVerified = user ? await verifyPassword(password, user.email) : false;
+       //console.log("passwordVerified", passwordVerified);
+       if (!passwordVerified) {
+         setNotificationMessage("Invalid Password!");
+         setNotificationType("error");
+         setIsNotificationCard(true);
+         // setLoadingData(false);
+         // ✅ Fix: Reset loading/submitting states even when password fails
+         setIsSubmitting(false);
+         setSubmitStatus("failure");
+         setTimeout(() => {
+           setIsDeleteModalOpen(false); // ✅ Close delete modal properly
+           setSubmitStatus(null);
+         }, 10000);
+         return;
+       }
+ 
+       if (user) {
+         try {
+           // Call the API to delete the user from the backend
+           await deleteUser(user.user_id); // Assuming user_id exists
+            // Redirect to the users page after deletion
+           setSubmitStatus("success");
+           setNotificationMessage("User Deleted successfully!");
+           setIsNotificationCard(true);
+           setNotificationType("success");
+ 
+           setTimeout(() => {
+             setIsDeleteModalOpen(false); // ✅ Close delete modal properly
+             setSubmitStatus(null);
+             router.push("/super-admin/users");
+           }, 10000);
+         } catch (error) {
+           console.error("Error Deleting Invitation:", error);
+ 
+           setSubmitStatus("failure");
+           const errorMessage =
+             error instanceof Error
+               ? error.message
+               : "An unknown error occurred while deleting the invitation.";
+ 
+           setNotificationMessage(errorMessage);
+           setNotificationType("error");
+           setIsNotificationCard(true);
+         } finally {
+           setIsSubmitting(false);                     // ✅ end submitting
+           // setLoadingData(false);
+         }
+       }
+     };
+ 
 
     // Handle saving updates to the user
     const handleSave = async (userData: UserUpdateSchema) => {
@@ -353,7 +351,7 @@ function UserViewDetailContent() {
             {isDeleteModalOpen && (
                 <DeleteUserModal
                     userName={user?.name || "Unknown"}
-                    onClose={() => { setIsDeleteModalOpen(false); setSubmitStatus(null); }}
+                    onClose={() => { setIsDeleteModalOpen(false); setSubmitStatus(null); router.push("/super-admin/users"); }}
                     onDelete={handleDelete}
                     isSubmitting={isSubmitting}
                     submitStatus={submitStatus}

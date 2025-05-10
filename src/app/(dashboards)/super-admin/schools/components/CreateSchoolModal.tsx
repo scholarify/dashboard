@@ -9,6 +9,7 @@ import CustomTextarea from "@/components/inputs/CustomTextarea";
 import CustomDateInput from "@/components/inputs/CustomDateInput";
 import SubmissionFeedback from "@/components/widgets/SubmissionFeedback";
 import CircularLoader from "@/components/widgets/CircularLoader";
+import { motion } from "framer-motion";
 
 
 
@@ -16,11 +17,17 @@ interface CreateSchoolProps {
   onClose: () => void;
   onSave: (schoolData: SchoolCreateSchema) => Promise<void>;
   initialData?: SchoolCreateSchema;
+  submitStatus: "success" | "failure" | null;
+  isSubmitting: boolean;
 }
 
-const CreateSchoolModal: React.FC<CreateSchoolProps> = ({ onClose, onSave, initialData }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<"success" | "failure" | null>(null);
+const CreateSchoolModal: React.FC<CreateSchoolProps> = ({ 
+  onClose, 
+  onSave, 
+  initialData,  
+  submitStatus,
+  isSubmitting, }) => {
+
   const [formData, setFormData] = useState<SchoolCreateSchema | SchoolSchema>(
     initialData || {
       name: "",
@@ -53,12 +60,9 @@ const CreateSchoolModal: React.FC<CreateSchoolProps> = ({ onClose, onSave, initi
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit  = async (e: React.FormEvent) => {
+  const handleSubmit  = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitStatus(null);
-    try {
-      await onSave({
+    onSave({
         ...formData,
         phone_number: `${countryCode}${formData.phone_number}`,
         email: formData.email || "",
@@ -69,18 +73,7 @@ const CreateSchoolModal: React.FC<CreateSchoolProps> = ({ onClose, onSave, initi
         name: formData.name || "",
         principal_name: formData.principal_name || "",
       });
-      setSubmitStatus("success");
-      setTimeout(() => {
-        onClose(); // close modal after showing animation
-      }, 5000);
-    } catch (error) {
-      console.error(error);
-      setSubmitStatus("failure");
-      setTimeout(() => {
-        setSubmitStatus(null); // allow retry
-        setIsSubmitting(false);
-      }, 5000);
-    }
+
   };
 
   return (
@@ -190,27 +183,34 @@ const CreateSchoolModal: React.FC<CreateSchoolProps> = ({ onClose, onSave, initi
 
             {/* Boutons */}
             <div className="flex justify-end space-x-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600 flex items-center gap-2"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <CircularLoader size={18} color="teal-500" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save"
-                )}
-              </button>
+            <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500"
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                  type="submit"
+                  className="px-4 py-2 bg-teal text-white rounded-md hover:bg-teal-600 flex items-center gap-2"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <CircularLoader size={18} color="teal-500" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save"
+                  )}
+                </motion.button>
 
             </div>
           </form>

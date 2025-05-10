@@ -199,9 +199,10 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
                 setTimeout(() => {
                     setIsDeleteModalOpen(false); // ✅ Close delete modal properly
                     setSubmitStatus(null);
+                    router.push(`${BASE_URL}/classes`);
                 }, 10000);
                 // Redirect back to the class list after deletion
-                //router.push(`${BASE_URL}/classes`);
+                
             } catch (error) {
                 console.error("Error Deleting Class :", error);
 
@@ -255,7 +256,7 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
             {/* Edit Modal */}
             {isEditModalOpen && (
                 <UpdateClassModal
-                    onClose={() => {setIsEditModalOpen(false); setSubmitStatus(null);}}
+                    onClose={() => {setIsEditModalOpen(false); setSubmitStatus(null); }}
                     onSave={handleSave}
                     initialData={classData}
                     classLevels={classLevels}
@@ -268,7 +269,7 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
             {isDeleteModalOpen && classData && (
                 <DeleteClassModal
                     className={classData.name}
-                    onClose={() => {setIsDeleteModalOpen(false); setSubmitStatus(null);}}
+                    onClose={() => {setIsDeleteModalOpen(false); setSubmitStatus(null); router.push(`${BASE_URL}/classes`);}}
                     onDelete={handleDelete}
                     submitStatus={submitStatus}
                     isSubmitting={isSubmitting}
