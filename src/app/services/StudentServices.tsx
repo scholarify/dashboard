@@ -168,4 +168,33 @@ export async function getStudentsByClassAndSchool(
       throw new Error("Failed to fetch filtered students");
     }
   }
+
+  export async function getStudentsBySchool(schoolId: string): Promise<StudentSchema[]> {
+    const token = getTokenFromCookie("idToken");
+  
+    try {
+      const response = await fetch(
+        `${BASE_API_URL}/student/get-students-by-school?schoolId=${schoolId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      if (!response.ok) {
+        console.error("Error fetching students by school:", response.statusText);
+        throw new Error("Failed to fetch students by school");
+      }
+  
+      const data = await response.json();
+      return data as StudentSchema[];
+    } catch (error) {
+      console.error("Fetch error (students by school):", error);
+      throw new Error("Failed to fetch students by school");
+    }
+  }
+  
   

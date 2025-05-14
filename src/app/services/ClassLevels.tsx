@@ -143,3 +143,33 @@ export async function deleteMultipleClassLevels(ids: string[]) {
 
   return await response.json();
 }
+
+// Get class levels by school ID
+export async function getClassLevelsBySchoolId(schoolId: string): Promise<ClassLevelSchema[]> {
+  try {
+    const token = getTokenFromCookie("idToken");
+    const response = await fetch(`${BASE_API_URL}/class-level/get-class-levels-by-school/${schoolId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch class levels for the school");
+    }
+
+    const levels = await response.json();
+    return levels.map((level: any) => ({
+      _id: level._id,
+      school_id: level.school_id,
+      name: level.name,
+      createdAt: level.createdAt,
+      updatedAt: level.updatedAt,
+    })) as ClassLevelSchema[];
+  } catch (error) {
+    console.error("Error fetching class levels by school ID:", error);
+    throw new Error("Failed to fetch class levels by school ID");
+  }
+}

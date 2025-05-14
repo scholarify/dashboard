@@ -29,7 +29,7 @@ const navigation = {
 
 
 
-function SchoolContent() {
+function SchoolContent() {    
   const router = useRouter();
   const [schools, setSchools] = useState<SchoolSchema[]>([]);
   const [loadingData, setLoadingData] = useState(false);

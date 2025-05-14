@@ -24,6 +24,7 @@ import DataTableFix from "@/components/utils/TableFix";
 import { motion } from "framer-motion";
 import Loading from "@/components/widgets/Loading";
 import { link } from "fs";
+import { calculateAge } from "@/components/utils/CalculateAge";
 
 const BASE_URL = "/super-admin";
 
@@ -50,7 +51,7 @@ function ClassDetailContent({ classId, schoolId }: { classId: string | null, sch
     const studentColumns = [
         { header: "Student ID", accessor: (row: StudentSchema) => row.student_id },
         { header: "Full Name", accessor: (row: StudentSchema) => row.name },
-        { header: "Age", accessor: (row: StudentSchema) => row.age },
+        { header: "Age", accessor: (row: StudentSchema) => calculateAge(row.date_of_birth) },
         {
             header: "Gender",
             accessor: (row: StudentSchema) =>
