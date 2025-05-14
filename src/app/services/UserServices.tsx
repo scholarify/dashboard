@@ -257,3 +257,35 @@ export async function getUserBy_id(_id: string) {
 
     return user;
 }
+
+export async function forget_password(email: string) {
+    try {
+        const response = await fetch(`${BASE_API_URL}/auth/forgot-password`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                email: email,
+            }),
+        });
+
+        if (!response.ok) {
+            let errorMessage = "Failed to send reset password email: check your email";
+            try {
+                const errorBody = await response.json();
+                errorMessage = errorBody?.message || errorMessage;
+            } catch (parseError) {
+                console.warn("Could not parse error response:", parseError);
+            }
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        return data;
+
+    } catch (error) {
+        console.error("Error sending reset password email:", error);
+        throw new Error("Failed to send reset password email");
+    }
+}

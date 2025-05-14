@@ -11,16 +11,16 @@ interface DeleteUserModalProps {
   userName: string;
   onClose: () => void;
   onDelete: (password: string) => void;
-  submitStatus: "success" | "failure" | null;
-  isSubmitting: boolean;
+  submitStatus?: "success" | "failure" | null;
+  isSubmitting?: boolean;
 }
 
 const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
   userName,
   onClose,
   onDelete,
-  submitStatus,
-  isSubmitting,
+  submitStatus = null,
+  isSubmitting = false,
 }) => {
   const [password, setPassword] = useState("");
 

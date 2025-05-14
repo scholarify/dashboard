@@ -12,6 +12,7 @@ import CircularLoader from "@/components/widgets/CircularLoader";
 
 export default function Login() {
     const [isLoading, setIsLoading] = useState(false);
+    const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState(false);
     const { login, isAuthenticated, loading, redirectAfterLogin } = useAuth();
     const router = useRouter();
     // State pour les champs de formulaire
@@ -55,8 +56,19 @@ export default function Login() {
         }
     };
 
+    // Fonction pour gérer le clic sur le lien "Forgot Password?"
+    const handleForgotPasswordClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault();
+        setIsForgotPasswordLoading(true);
+
+        // Rediriger vers la page de récupération de mot de passe après un court délai
+        setTimeout(() => {
+            router.push('/forgot-password');
+        }, 800); // Délai de 800ms pour montrer l'animation
+    };
+
     return <>
-        <div className="flex bg-white dark:bg-gray-900 dark:text-white  rounded-lg shadow-lg h-screen">
+        <div className="flex bg-white dark:bg-gray-900 dark:text-white  rounded-lg shadow-lg h-screen px-4">
             {/* Section de l'image latérale */}
             <div className="asideLogo w-[50%] h-screen py-2">
                 <div className="asideImage w-full h-full">
@@ -140,8 +152,19 @@ export default function Login() {
                                     />
                                     <span className="text-sm text-gray-800 dark:text-gray-200">Remember for 30 days</span>
                                 </label>
-                                <a href="/forgot-password" className="text-sm text-blue-600 hover:underline">
-                                    Forgot Password?
+                                <a
+                                    href="/forgot-password"
+                                    onClick={handleForgotPasswordClick}
+                                    className="text-sm text-blue-600 hover:underline flex items-center"
+                                >
+                                    {isForgotPasswordLoading ? (
+                                        <>
+                                            <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                            Redirecting...
+                                        </>
+                                    ) : (
+                                        "Forgot Password?"
+                                    )}
                                 </a>
                             </div>
 

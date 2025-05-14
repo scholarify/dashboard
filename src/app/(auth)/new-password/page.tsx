@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import AppLogo from "@/components/AppLogo";
 import FormHeading from "@/components/FormHeading";
 import Input from "@/components/input";
-import NotificationCard from "@/components/NotificationCard";
+import NotificationCard, { NotificationType } from "@/components/NotificationCard";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import '@/styles/formStyle.css';
@@ -26,7 +26,7 @@ function NewPasswordContent() {
   const [notification, setNotification] = useState<{
     title: string;
     message: string;
-    type: string;
+    type: NotificationType;
     isVisible: boolean;
   }>({
     title: '',
@@ -367,7 +367,7 @@ function NewPasswordContent() {
 // Composant principal qui enveloppe NewPasswordContent dans Suspense
 export default function NewPassword() {
   return (
-    <div className="flex bg-white dark:bg-gray-900 dark:text-white rounded-lg shadow-lg h-screen">
+    <div className="flex bg-white dark:bg-gray-900 dark:text-white rounded-lg shadow-lg h-screen px-4">
       <div className="asideLogo w-[50%] h-screen py-2">
         <div className="asideImage w-full h-full">
           <img

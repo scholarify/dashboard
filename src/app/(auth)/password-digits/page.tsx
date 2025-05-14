@@ -123,7 +123,7 @@ export default function PasswordDigits() {
   };
 
   return (
-    <div className="flex bg-white dark:bg-gray-900 dark:text-white  rounded-lg shadow-lg h-screen">
+    <div className="flex bg-white dark:bg-gray-900 dark:text-white  rounded-lg shadow-lg h-screen px-4">
       {/* Section de l'image latérale */}
       <div className="asideLogo w-[50%] h-screen py-2">
         <div className="asideImage w-full h-full">
