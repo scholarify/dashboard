@@ -5,7 +5,8 @@ import CircularLoader from '@/components/widgets/CircularLoader';
 import React, { Suspense, useEffect, useState } from 'react';
 import { Wallet } from 'lucide-react';
 import DataTable from '@/components/utils/DataTable';
-import NotificationCard from '@/components/NotificationCard';
+import NotificationCard, { NotificationType } from '@/components/NotificationCard';
+import { createSuccessNotification, createErrorNotification, NotificationState } from '@/app/types/notification';
 import useAuth from '@/app/hooks/useAuth';
 import { getUserBy_id, verifyPassword } from '@/app/services/UserServices';
 import CreateSubscriptionModal from '../subscription/components/CreateSubscriptionModal';
@@ -55,7 +56,7 @@ interface SubscriptionCreateSchema {
 
 export default function Page() {
   const { logout } = useAuth();
-  
+
   const BASE_URL = "/super-admin";
 
   const navigation = {
@@ -73,9 +74,12 @@ export default function Page() {
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [subscriptionToUpdate, setSubscriptionToUpdate] = useState<SubscriptionNewFormSchema | null>(null);
     const [loadingData, setLoadingData] = useState(false);
-    const [isNotificationCard, setIsNotificationCard] = useState(false);
-    const [notificationMessage, setNotificationMessage] = useState("");
-    const [notificationType, setNotificationType] = useState<"success" | "error">("success");
+    const [notification, setNotification] = useState<NotificationState>({
+      title: '',
+      message: '',
+      type: 'info',
+      isVisible: false
+    });
     const { user } = useAuth();
 
     async function getAllSubscriptions() {
@@ -241,15 +245,11 @@ export default function Page() {
             } : sub
           )
         );
-        setNotificationMessage("Subscription renewed successfully!");
-        setIsNotificationCard(true);
-        setNotificationType("success");
+        setNotification(createSuccessNotification("Subscription renewed successfully!"));
       } catch (error) {
         console.error("Error renewing subscription:", error);
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred while renewing the subscription.";
-        setNotificationMessage(errorMessage);
-        setIsNotificationCard(true);
-        setNotificationType("error");
+        setNotification(createErrorNotification(errorMessage));
       } finally {
         setLoadingData(false);
       }
@@ -290,9 +290,7 @@ export default function Page() {
       } catch (error) {
         console.error("Error creating subscription:", error);
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred while creating the subscription.";
-        setNotificationMessage(errorMessage);
-        setIsNotificationCard(true);
-        setNotificationType("error");
+        setNotification(createErrorNotification(errorMessage));
       } finally {
         setLoadingData(false);
       }
@@ -301,9 +299,7 @@ export default function Page() {
     const handleDelete = async (password: string) => {
       const passwordVerified = user ? await verifyPassword(password, user.email) : false;
       if (!passwordVerified) {
-        setNotificationMessage("Invalid Password!");
-        setNotificationType("error");
-        setIsNotificationCard(true);
+        setNotification(createErrorNotification("Invalid Password!"));
         return;
       }
 
@@ -311,17 +307,13 @@ export default function Page() {
         try {
           // Simuler la suppression (remplace par un appel API plus tard)
           setSubscriptions(subscriptions.filter((s) => s.id !== subscriptionToDelete.id));
-          setNotificationMessage("Subscription deleted successfully!");
-          setIsNotificationCard(true);
-          setNotificationType("success");
+          setNotification(createSuccessNotification("Subscription deleted successfully!"));
           setSubscriptionToDelete(null);
           setIsDeleteModalOpen(false);
         } catch (error) {
           console.error("Error deleting subscription:", error);
           const errorMessage = error instanceof Error ? error.message : "Error deleting subscription.";
-          setNotificationMessage(errorMessage);
-          setIsNotificationCard(true);
-          setNotificationType("error");
+          setNotification(createErrorNotification(errorMessage));
         }
       }
     };
@@ -336,30 +328,22 @@ export default function Page() {
         const selectedIds = new Set(selectedSubscriptions.map(sub => sub.id));
         setSubscriptions(subscriptions.filter(subscription => !selectedIds.has(subscription.id || '')));
         setSelectedSubscriptions([]);
-        setNotificationMessage(`${selectedSubscriptions.length} subscription(s) deleted successfully!`);
-        setIsNotificationCard(true);
-        setNotificationType("success");
+        setNotification(createSuccessNotification(`${selectedSubscriptions.length} subscription(s) deleted successfully!`));
       }
     };
 
     return (
       <div className="md:p-6">
-        {isNotificationCard && (
-          <NotificationCard
-            title="Notification"
-            icon={
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z" stroke="#15803d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M7.75 11.9999L10.58 14.8299L16.25 9.16992" stroke="#15803d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            }
-            message={notificationMessage}
-            onClose={() => setIsNotificationCard(false)}
-            type={notificationType}
-            isVisible={isNotificationCard}
-            isFixed={true}
-          />
-        )}
+        <NotificationCard
+          title={notification.title}
+          message={notification.message}
+          type={notification.type}
+          isVisible={notification.isVisible}
+          onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+          isFixed={true}
+          autoClose={true}
+          duration={5000}
+        />
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
           <button

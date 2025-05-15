@@ -15,7 +15,7 @@ interface AuthContextType {
     user: UserSchema | null;
     isAuthenticated: boolean;
     loading: boolean;
-    login: (email: string, password: string) => Promise<void>;
+    login: (email: string, password: string, rememberMe: boolean, redirectUrl?: string) => Promise<void>;
     logout: () => Promise<void>;
     redirectAfterLogin: string | null;
     setRedirectAfterLogin: (url: string) => void;
@@ -40,15 +40,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     useEffect(() => {
         const checkUserLoggedIn = async () => {
             try {
-                const user: UserSchema = await getCurrentUser();
+                const user: UserSchema | null = await getCurrentUser();
                 if (user) {
                     setUser(user);
+                }else{
+                    Cookies.remove("idToken");
+                    setUser(null);
                 }
 
             } catch (error) {
                 console.error("Error verifying token:", error);
-                setUser(null);
-                Cookies.remove("idToken");
             }
             finally {
                 setLoading(false);
@@ -57,7 +58,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         checkUserLoggedIn();
     }, []);
 
-    const login = async (email: string, password: string, redirectUrl?: string) => {
+    const login = async (email: string, password: string, rememberMe: boolean, redirectUrl?: string) => {
         try {
             const response = await fetch(`${BASE_API_URL}/auth/login`, {
                 method: "POST",
@@ -82,9 +83,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
 
             // Stocker le token dans les cookies
-            Cookies.set("idToken", idToken, { expires: 7 }); // Expire dans 7 jours
+            Cookies.set("idToken", idToken, { expires: rememberMe ? 30 : 7 }); // Expire dans 7 jours
 
-            const user: UserSchema = await getCurrentUser();
+            const user: UserSchema | null = await getCurrentUser(); // Vérifier si l'utilisateur est connecté à nouveau après la connexion réussie
             if (user) {
                 setUser(user);
             }
@@ -93,6 +94,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             if (redirectUrl) {
                 setRedirectAfterLogin(redirectUrl);
             }
+            
         } catch (error) {
             console.error("Login failed:", error);
             throw error;
