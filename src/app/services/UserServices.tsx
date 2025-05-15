@@ -289,3 +289,103 @@ export async function forget_password(email: string) {
         throw new Error("Failed to send reset password email");
     }
 }
+
+export async function verify_otp(code: string, email: string) {
+    try {
+        const response = await fetch(`${BASE_API_URL}/auth/verify-code`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                code: code,
+                email: email,
+            }),
+        });
+
+        if (!response.ok) {
+            let errorMessage = "Failed to verify OTP";
+            try {
+                const errorBody = await response.json();
+                errorMessage = errorBody?.message || errorMessage;
+            } catch (parseError) {
+                console.warn("Could not parse error response:", parseError);
+            }
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        return data;
+
+    } catch (error) {
+        console.error("Error verifying OTP:", error);
+        throw new Error("Failed to verify OTP");
+    }
+}
+
+
+export async function resend_Code(email: string) {
+    try {
+        const response = await fetch(`${BASE_API_URL}/auth/resend-code`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                email: email,
+            }),
+        });
+
+        if (!response.ok) {
+            let errorMessage = "Failed to resend code";
+            try {
+                const errorBody = await response.json();
+                errorMessage = errorBody?.message || errorMessage;
+            } catch (parseError) {
+                console.warn("Could not parse error response:", parseError);
+            }
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        return data;
+
+    } catch (error) {
+        console.error("Error resending code:", error);
+        throw new Error("Failed to resend code");
+    }
+}
+
+export async function reset_password(newPassword: string, email: string, code: string) {
+    try {
+        const response = await fetch(`${BASE_API_URL}/auth/reset-password`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                email: email,
+                code: code,
+                newPassword: newPassword,
+            }),
+        });
+
+        if (!response.ok) {
+            let errorMessage = "Failed to reset password";
+            try {
+                const errorBody = await response.json();
+                errorMessage = errorBody?.message || errorMessage;
+            } catch (parseError) {
+                console.warn("Could not parse error response:", parseError);
+            }
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        return data;
+
+    } catch (error) {
+        console.error("Error resetting password:", error);
+        throw new Error("Failed to reset password");
+    }
+}

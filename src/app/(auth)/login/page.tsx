@@ -9,6 +9,7 @@ import '@/styles/formStyle.css';
 import useAuth from "@/app/hooks/useAuth";
 import { redirect, useRouter } from "next/navigation";
 import CircularLoader from "@/components/widgets/CircularLoader";
+import { getCurrentUser } from "@/app/services/UserServices";
 
 export default function Login() {
     const [isLoading, setIsLoading] = useState(false);
@@ -40,13 +41,20 @@ export default function Login() {
         e.preventDefault();
         setIsLoading(true);
         try {
-            await login(email, password);
+            await login(email, password, rememberMe);
             setErrorMessage('');
             setHasError(false);
             setEmail('');
             setPassword('');
             setRememberMe(false);
-            router.push('/super-admin/dashboard');
+            let user = await getCurrentUser();
+            if (user && user.role === 'super') {
+                router.push('/super-admin/dashboard');
+            } else if (user && user.role === 'admin') {
+                router.push('/school-admin/dashboard');
+            } else if (user && user.role === 'teacher') {
+                router.push('/school-admin/dashboard');
+            }
         } catch (error) {
             setErrorMessage("The email or password you entered doesn't match our records. Please double-check and try again.");
             setHasError(true);

@@ -6,9 +6,11 @@ import AppLogo from "@/components/AppLogo";
 import FormHeading from "@/components/FormHeading";
 import Input from "@/components/input";
 import NotificationCard, { NotificationType } from "@/components/NotificationCard";
+import { createSuccessNotification, createErrorNotification, NotificationState } from '@/app/types/notification';
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import '@/styles/formStyle.css';
+import { reset_password } from "@/app/services/UserServices";
 
 // Composant enfant qui utilise useSearchParams
 function NewPasswordContent() {
@@ -23,12 +25,7 @@ function NewPasswordContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [hasError, setHasError] = useState(false);
-  const [notification, setNotification] = useState<{
-    title: string;
-    message: string;
-    type: NotificationType;
-    isVisible: boolean;
-  }>({
+  const [notification, setNotification] = useState<NotificationState>({
     title: '',
     message: '',
     type: 'info',
@@ -56,14 +53,12 @@ function NewPasswordContent() {
     e.preventDefault();
 
     if (password !== passwordConfirmation) {
-      setErrorMessage('The passwords are incompatible');
+      setErrorMessage('The passwords do not match');
       setHasError(true);
-      setNotification({
-        title: 'Erreur',
-        message: 'Les mots de passe ne correspondent pas.',
-        type: 'error',
-        isVisible: true,
-      });
+      setNotification(createErrorNotification(
+        'The passwords do not match. Please make sure both passwords are identical.',
+        'Password Mismatch'
+      ));
       return;
     }
 
@@ -72,61 +67,45 @@ function NewPasswordContent() {
         'The password is weak. It must contain at least 8 characters, 1 uppercase letter, 1 number, and 1 special character.'
       );
       setHasError(true);
-      setNotification({
-        title: 'Erreur',
-        message: 'Le mot de passe est trop faible.',
-        type: 'error',
-        isVisible: true,
-      });
+      setNotification(createErrorNotification(
+        'The password is too weak. It must contain at least 8 characters, 1 uppercase letter, 1 number, and 1 special character.',
+        'Weak Password'
+      ));
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/password/success', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          digits,
-          password,
-          password_confirmation: passwordConfirmation,
-        }),
-      });
+      const response = await reset_password(password, email, digits);
+      if(response && response.success) {
+        setNotification(createSuccessNotification(
+          'Your password has been reset successfully. You will be redirected to the login page.',
+          'Password Reset Successful'
+        ));
 
-      if (!response.ok) {
-        throw new Error('Erreur lors de la soumission');
+        setPassword('');
+        setPasswordConfirmation('');
+        setPasswordStrength(0);
+
+        // Ajouter un délai avant la redirection pour montrer la notification
+        setTimeout(() => {
+          window.location.href = '/successfull-reset';
+        }, 2000);
+        return;
+      }else {
+        throw new Error(response?.message || 'Failed to reset password.');
       }
-
-      setNotification({
-        title: 'Succès !',
-        message: 'Mot de passe réinitialisé avec succès.',
-        type: 'success',
-        isVisible: true,
-      });
-
-      setPassword('');
-      setPasswordConfirmation('');
-      setPasswordStrength(0);
-
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 2000);
     } catch (error) {
-      setErrorMessage('Erreur lors de la réinitialisation du mot de passe.');
+      const errorMsg = error instanceof Error ? error.message : 'Failed to reset password. Please try again.';
+      setErrorMessage(errorMsg);
       setHasError(true);
-      setNotification({
-        title: 'Erreur',
-        message: 'Échec de la réinitialisation. Veuillez réessayer.',
-        type: 'error',
-        isVisible: true,
-      });
+      setNotification(createErrorNotification(
+        'Failed to reset your password. Please try again or contact support if the problem persists.',
+        'Reset Failed'
+      ));
     } finally {
       setIsLoading(false);
-      window.location.href = '/successfull-reset';
     }
   };
 
@@ -170,51 +149,9 @@ function NewPasswordContent() {
         type={notification.type}
         isVisible={notification.isVisible}
         onClose={closeNotification}
-        icon={
-          notification.type === 'success' ? (
-            <svg
-              className="h-5 w-5 text-green-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          ) : notification.type === 'error' ? (
-            <svg
-              className="h-5 w-5 text-red-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          ) : (
-            <svg
-              className="h-5 w-5 text-blue-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          )
-        }
+        isFixed={true}
+        autoClose={true}
+        duration={3000}
       />
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">

@@ -45,17 +45,17 @@ export default function Login() {
             const response = await forget_password(email);
             console.log(response);
             // Vérifier si la réponse est réussie
-            if (response) {
+            if (response && response.success) {
                 // Afficher une notification de succès
                 setSuccessNotification(createSuccessNotification(
-                    response.message,
-                    "Success"
+                    "A code has been sent to your email. Please check your inbox.",
+                    "Code Sent"
                 ));
 
                 // Ajouter un délai avant la redirection pour montrer la notification
                 setTimeout(() => {
-                    // Rediriger vers la page de saisie du code
-                    window.location.href = '/password-digits';
+                    // Rediriger vers la page de saisie du code avec l'email en paramètre
+                    window.location.href = `/password-digits?email=${encodeURIComponent(email)}`;
                 }, 3000); // Délai plus long pour que l'utilisateur puisse voir la notification
             } else {
                 // Si la réponse indique une erreur
