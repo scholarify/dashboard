@@ -22,6 +22,10 @@ import ConsentDeclaration from "@/components/utils/ConsentDeclaration";
 import RegistrationSummary from "@/components/utils/RegistrationSummary";
 import { getClassLevelById, getClassLevelsBySchoolId } from "@/app/services/ClassLevels";
 import { ClassLevelSchema } from "@/app/models/ClassLevel";
+import { createStudent } from "@/app/services/StudentServices";
+import { createFeePayment } from "@/app/services/FeePaymentServices";
+import { AcademicYearSchema } from "@/app/models/AcademicYear";
+import { getAcademicYears } from "@/app/services/AcademicYearServices";
 
 
 
@@ -35,6 +39,7 @@ interface FormData {
     place_of_birth?: string;
     address?: string;
     phone?: string;
+    guardian_address?: string;
     guardian_phone?: string;
     guardian_name?: string;
     guardian_occupation?: string;
@@ -47,7 +52,7 @@ interface FormData {
     class_id: string;
     guardian_agreed_to_terms: boolean;
     transcript_reportcard: boolean;
-    health_condtion?: string;
+    health_condition?: string;
     doctors_name?: string;
     doctors_phone?: string;
     selectedFees: string[];         // ✅ required for fee checkboxes
@@ -55,8 +60,11 @@ interface FormData {
     paymentMode: "full" | "installment";
     installments: number;
     installmentDates: string[];
+    applyScholarship: boolean;
+    scholarshipAmount: number;
+    status?: "enrolled" | "graduated" | "dropped" | "not enrolled";
+    scholarshipPercentage: number; // ✅ Made property required
 }
-
 const steps = [
     { title: "Personal Information", description: "Enter the student's details." },
     { title: "Contact Information", description: "Provide the student's contact info." },
@@ -80,12 +88,12 @@ function StepIndicator({ steps, currentStep }: { steps: any[]; currentStep: numb
                 return (
                     <div key={index} className="flex flex-col items-center text-center flex-shrink-0 w-24">
                         <div
-                            className={`rounded-full w-10 h-10 flex items-center justify-center text-white font-bold ${isActive ? "bg-blue-600" : isCompleted ? "bg-teal" : "bg-gray-500"
+                            className={`rounded-full w-10 h-10 flex items-center justify-center text-white font-bold ${isActive ? "bg-gray-800" : isCompleted ? "bg-teal" : "bg-gray-500"
                                 }`}
                         >
                             {index + 1}
                         </div>
-                        <span className={`mt-1 text-xs ${isActive ? "font-semibold text-blue-600" : "text-gray-600"}`}>
+                        <span className={`mt-1 text-xs ${isActive ? "font-semibold text-foreground" : "text-foreground"}`}>
                             {step.title.split(" ")[0]}
                         </span>
                     </div>
@@ -103,7 +111,15 @@ function RegistrationContent({
     handleNext,
     handleBack,
     countryCode,
-    setCountryCode
+    setCountryCode,
+    sameAddressAsChild,
+    setSameAddressAsChild,
+    sameEmergencyAsGuardian,
+    setSameEmergencyAsGuardian,
+    setIsNotificationCard,
+    setNotificationMessage,
+    setNotificationType,
+
 }: {
     steps: any[];
     currentStep: number;
@@ -113,14 +129,26 @@ function RegistrationContent({
     handleBack: () => void;
     countryCode: string;
     setCountryCode: (value: string) => void;
+    sameAddressAsChild: boolean;
+    setSameAddressAsChild: (value: boolean) => void;
+    setIsNotificationCard: (value: boolean) => void;
+    setNotificationMessage: (value: string) => void;
+    setNotificationType: (value: "success" | "error" | "info" | "warning") => void;
+    sameEmergencyAsGuardian: boolean;
+    setSameEmergencyAsGuardian: (value: boolean) => void;
+              
 }) {
     const searchParams = useSearchParams();
     const schoolId = searchParams.get("schoolId");
     const [feeList, setFeeList] = useState<FeeSchema[]>([]);
     const [feeLoading, setFeeLoading] = useState(false);
     const [classLevels, setClassLevels] = useState<ClassLevelSchema[]>([])
+    const [acadamicYear, setCurrentAcademicYear] = useState<string>("")
+
     const [resourceList, setResourceList] = useState<SchoolResourceSchema[]>([]);
     const [resourceLoading, setResourceLoading] = useState(true);
+    const [classLoading, setClassLoading] = useState(true);
+    const [yearLoading, setYearLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState<"success" | "failure" | null>(null);
 
@@ -128,9 +156,43 @@ function RegistrationContent({
         label: level.name,
         value: level._id,
     }));
-    console.log(classLevels)
+    const getCurrentAcademicYear = (academicYears: AcademicYearSchema[]): string => {
+        const today = new Date();
+      
+        const current = academicYears.find(year => {
+          const start = new Date(year.start_date);
+          const end = new Date(year.end_date);
+          return today >= start && today <= end;
+        });
+      
+        return current?.academic_year || "";
+      };
+      
+      const fetchAcademicYear = async () => {
+        try {
+          setYearLoading(true);
+      
+          const years = await getAcademicYears();
+          const current = getCurrentAcademicYear(years);
+      
+          if (current) {
+            console.log("✅ Current Academic Year:", current);
+            setCurrentAcademicYear(current); // current is already a string
+          } else {
+            console.warn("⚠️ No current academic year found for today.");
+            setCurrentAcademicYear(""); // Reset to an empty string
+          }
+        } catch (error) {
+          console.error("Error fetching academic years:", error);
+        } finally {
+          setYearLoading(false);
+        }
+      };
+      
+
     const fetchClassLevel = async () => {
         try {
+            setClassLoading(true);
             if (!schoolId) {
                 throw new Error("School ID is required to fetch fees.");
             }
@@ -139,6 +201,7 @@ function RegistrationContent({
         } catch (error) {
             console.error("Error fetching fees:", error);
         } finally {
+            setClassLoading(true);
         }
     };
     const fetchFees = async () => {
@@ -169,13 +232,13 @@ function RegistrationContent({
     };
 
 
-
+    // console.log("academic year:",acadamicYear);
     useEffect(() => {
 
         fetchFees();
         fetchResources();
         fetchClassLevel();
-
+        fetchAcademicYear();
     }, [currentStep]);
     // console.log("here is fee list :",feeList);
 
@@ -302,13 +365,22 @@ function RegistrationContent({
                             ]}
                             placeholder="Select Relationship"
                         />
+                        <CustomCheckboxInput
+                            label="Same address as student"
+                            id="sameAddressAsChild"
+                            name="sameAddressAsChild"
+                            checked={sameAddressAsChild}
+                            onChange={(e) => setSameAddressAsChild(e.target.checked)}
+                        />
+
                         <CustomInput
                             label="Address"
-                            id="address"
+                            id="guardian_address"
                             placeholder="(Required)"
-                            name="address"
-                            value={formData.address || ""}
+                            name="guardian_address"
+                            value={formData.guardian_address || ""}
                             onChange={handleChange}
+
                         />
                         <CustomPhoneInput
                             label="Phone Number (Required)"
@@ -371,6 +443,14 @@ function RegistrationContent({
             case 4:
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <CustomCheckboxInput
+                            label="Same as Guardian Info"
+                            id="sameEmergencyAsGuardian"
+                            name="sameEmergencyAsGuardian"
+                            checked={sameEmergencyAsGuardian}
+                            onChange={(e) => setSameEmergencyAsGuardian(e.target.checked)}
+                        />
+
                         <CustomInput
                             label="Emergency Contact Name"
                             id="emergency_contact_name"
@@ -417,9 +497,9 @@ function RegistrationContent({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <CustomTextarea
                             label="Health Condition (Write notes if student have a health condition)"
-                            id="health_condtion"
-                            name="health_condtion"
-                            value={formData.health_condtion || ""}
+                            id="health_condition"
+                            name="health_condition"
+                            value={formData.health_condition || ""}
                             onChange={handleChange}
                         />
                         <CustomInput
@@ -458,8 +538,7 @@ function RegistrationContent({
                             feeList={feeList}
                             feeLoading={feeLoading}
                             resourceList={resourceList}
-                            resourceLoading={resourceLoading}
-                        />
+                            resourceLoading={resourceLoading} applyScholarship={false} scholarshipAmount={0} />
                     </div>
                 );
             case 8:
@@ -474,14 +553,156 @@ function RegistrationContent({
                 return null;
         }
     };
+    interface Fee {
+        amount?: number;
+    }
 
-    const handleSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
+    interface Resource {
+        amount?: number;
+    }
+
+    function calculateTotalFee(selectedFees: Fee[], selectedResources: Resource[], scholarshipPercentage: number): number {
+        const feesTotal = selectedFees.reduce((sum, fee) => sum + (fee.amount || 0), 0);
+        const resourcesTotal = selectedResources.reduce((sum, res) => sum + (res.amount || 0), 0);
+        const grossTotal = feesTotal + resourcesTotal;
+        const discount = (grossTotal * scholarshipPercentage) / 100;
+        return grossTotal - discount;
+      }
+    const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         // setIsSubmitting(true);
         // setSubmitStatus(null);
-        console.log("Submitting final form data:", formData);
+        console.log("To be submitted:", formData);
+    
+        try {
+            const totalFee = calculateTotalFee(
+                formData.selectedFees.map((feeId) => feeList.find((fee) => fee._id === feeId)!).filter(Boolean) as Fee[],
+                formData.selectedResources.map((resourceId) => resourceList.find((resource) => resource._id === resourceId)!).filter(Boolean) as Resource[],
+                formData.scholarshipPercentage || 0
+              );
+              
+              const studentData = {
 
+                school_id: searchParams.get("schoolId") || "",
+                class_id: formData.class_id || "",
+              
+                first_name: formData.firstName,
+                last_name: formData.lastName,
+                middle_name: formData.middleName || "",
+                date_of_birth: formData.dateOfBirth || "",
+                nationality: formData.nationality || "Cameroonian",
+                gender: formData.gender || "",
+                place_of_birth: formData.place_of_birth || "",
+                address: formData.address || "",
+                phone: formData.phone || "",
+              
+                guardian_name: formData.guardian_name || "",
+                guardian_phone: formData.guardian_phone || "",
+                guardian_address: formData.guardian_address || "",
+                guardian_email: formData.guardian_email || "",
+                guardian_relationship: formData.guardian_relationship as "Mother" | "Father" | "Brother" | "Sister" | "Aunty" | "Uncle" | "Grand Mother" | "Grand Father" | "Other" | undefined,
+                guardian_occupation: formData.guardian_occupation || "",
+              
+                emergency_contact_name: formData.emergency_contact_name || "",
+                emergency_contact_phone: formData.emergency_contact_phone || "",
+                emergency_contact_relationship: formData.emergency_contact_relationship as "Mother" | "Father" | "Brother" | "Sister" | "Aunty" | "Uncle" | "Grand Mother" | "Grand Father" | "Other" | undefined,
+              
+                previous_school: formData.previous_school || "",
+                transcript_reportcard: formData.transcript_reportcard || false,
+              
+                health_condition: formData.health_condition || "",
+                doctors_name: formData.doctors_name || "",
+                doctors_phone: formData.doctors_phone || "",
+              
+                selectedFees: formData.selectedFees || [],
+                selectedResources: formData.selectedResources || [],
+                paymentMode: formData.paymentMode || "full",
+                installments: formData.installments || 1,
+                installmentDates: formData.installmentDates || [new Date().toISOString().split("T")[0]],
+                applyScholarship: formData.applyScholarship || false,
+                scholarshipAmount: formData.scholarshipAmount || 0,
+                scholarshipPercentage: formData.scholarshipPercentage || 0,
+              
+                fees: totalFee,
+                guardian_agreed_to_terms: formData.guardian_agreed_to_terms || false,
+                enrollement_date: new Date().toISOString(),
+                status: formData.status || "not enrolled",
+              };
+              
+            const data = await createStudent(studentData);
+            // Do something with `student` or show success message
+            console.log("create student data",data)
+            if (data) {
+                const numberOfInstallments = formData.installments || 1;
+                const amountPerInstallment = Number((totalFee / numberOfInstallments).toFixed(2));
+              
+                // Helper to generate dates if not provided
+                const generateInstallmentDates = (count: number): Date[] => {
+                  const dates: Date[] = [];
+                  const today = new Date();
+              
+                  for (let i = 0; i < count; i++) {
+                    const dueDate = new Date(today);
+                    dueDate.setMonth(today.getMonth() + i); // Spread over next few months
+                    dates.push(dueDate);
+                  }
+              
+                  return dates;
+                };
+              
+                // Use provided dates or generate them
+                const installmentDates: Date[] =
+                  Array.isArray(formData.installmentDates) && formData.installmentDates.length === numberOfInstallments
+                    ? formData.installmentDates.map((d: any) => new Date(d))
+                    : generateInstallmentDates(numberOfInstallments);
+              
+                const installments =
+                  formData.paymentMode === "installment"
+                    ? installmentDates.map((dueDate, index) => ({
+                        amount: amountPerInstallment,
+                        dueDate: dueDate.toISOString().split("T")[0],
+                        paid: index === 0, // Only first installment is paid
+                      }))
+                    : [];
+              
+                const feePaymentData = {
+                  student_id: data._id,
+                  school_id: searchParams.get("schoolId") || "",
+                  class_id: formData.class_id || "",
+                  academic_year: acadamicYear,
+              
+                  selectedFees: formData.selectedFees || [],
+                  selectedResources: formData.selectedResources || [],
+              
+                  paymentMode: formData.paymentMode || "full",
+                  totalAmount: totalFee,
+              
+                  installments,
+                };
+              
+                const paymentData = await createFeePayment(feePaymentData);
+                if(paymentData){
+                    alert("Added successfuly")
+                }
+              }
+
+        } catch (error) {
+            console.error("Error creating student:", error);
+            setSubmitStatus("failure");
+    
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "An unknown error occurred while creating the invitation.";
+    
+            setNotificationMessage(errorMessage);
+            setNotificationType("error");
+            setIsNotificationCard(true);
+        } finally {
+            // Optional cleanup
+        }
     }, [formData]);
+    
 
     return (
         <div>
@@ -545,6 +766,7 @@ export default function ViewParentPage() {
         phone: "",
         guardian_phone: "",
         guardian_name: "",
+        guardian_address: "",
         guardian_occupation: "",
         guardian_email: "",
         guardian_relationship: "",
@@ -555,7 +777,7 @@ export default function ViewParentPage() {
         emergency_contact_name: "",
         emergency_contact_phone: "",
         emergency_contact_relationship: "",
-        health_condtion: "",
+        health_condition: "",
         doctors_name: "",
         doctors_phone: "",
         selectedFees: [],
@@ -563,13 +785,99 @@ export default function ViewParentPage() {
         paymentMode: "full",
         installments: 1,
         installmentDates: [new Date().toISOString().split("T")[0]],
+        applyScholarship: false,
+        scholarshipAmount: 0,
+        scholarshipPercentage: 0, // Ensure default value is always provided
+        status:"not enrolled"
     });
 
     const [countryCode, setCountryCode] = useState("+237");
     const [currentStep, setCurrentStep] = useState(0);
+
     const [isNotificationCard, setIsNotificationCard] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState("");
-    const [notificationType, setNotificationType] = useState("success");
+    const [notificationType, setNotificationType] = useState<"success" | "error" | "info" | "warning">("success");
+    const [sameAddressAsChild, setSameAddressAsChild] = useState(false);
+    const [sameEmergencyAsGuardian, setSameEmergencyAsGuardian] = useState(false);
+    // ✅ Add validateStep here
+    const validateStep = () => {
+        switch (currentStep) {
+            case 0:
+                return (
+                    formData.firstName?.trim() &&
+                    formData.lastName?.trim() &&
+                    formData.dateOfBirth?.trim() &&
+                    formData.nationality?.trim() &&
+                    formData.gender?.trim()
+                );
+
+            case 1:
+                return true;
+
+            case 2:
+                return (
+                    formData.guardian_name?.trim() &&
+                    formData.guardian_relationship?.trim() &&
+                    formData.guardian_address?.trim() &&
+                    formData.guardian_phone?.trim()
+                );
+
+            case 3:
+                return !!formData.class_id;
+
+            case 4:
+                return (
+                    formData.emergency_contact_name?.trim() &&
+                    formData.emergency_contact_relationship?.trim() &&
+                    formData.emergency_contact_phone?.trim()
+                );
+
+            case 5:
+                return true;
+
+            case 6:
+                return formData.guardian_agreed_to_terms === true;
+
+            case 7:
+            case 8:
+                return true;
+
+            default:
+                return false;
+        }
+    };
+    // Prefill parent address if same as child
+    useEffect(() => {
+        if (sameAddressAsChild) {
+            setFormData((prev) => ({
+                ...prev,
+                guardian_address: prev.address || "", // student address -> guardian address
+            }));
+        } else {
+            setFormData((prev) => ({
+                ...prev,
+                guardian_address: "", // clear guardian address when unchecked
+            }));
+        }
+    }, [sameAddressAsChild]);
+    // Prefill emergency contact from guardian info
+    useEffect(() => {
+        if (sameEmergencyAsGuardian) {
+            setFormData((prev) => ({
+                ...prev,
+                emergency_contact_name: prev.guardian_name || "",
+                emergency_contact_relationship: prev.guardian_relationship || "",
+                emergency_contact_phone: prev.guardian_phone || "",
+            }));
+        } else {
+            setFormData((prev) => ({
+                ...prev,
+                emergency_contact_name: "",
+                emergency_contact_relationship: "",
+                emergency_contact_phone: "",
+            }));
+        }
+    }, [sameEmergencyAsGuardian]);
 
     const handleChange = useCallback((e: React.ChangeEvent<any>) => {
         const { name, type, value, checked } = e.target;
@@ -613,10 +921,24 @@ export default function ViewParentPage() {
         }
     }, []);
 
+    // const handleNext = useCallback(() => {
+    //     if (!validateStep()) {
+    //         setNotificationMessage("Please fill all required fields before proceeding.");
+    //         setIsNotificationCard(true)
+    //         setNotificationType('error')
+    //         return;
+    //       }
+    //     setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
+    // }, []);
     const handleNext = useCallback(() => {
+        if (!validateStep()) {
+            setNotificationMessage("Please fill all required fields before proceeding.");
+            setIsNotificationCard(true);
+            setNotificationType('error');
+            return;
+        }
         setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
-    }, []);
-
+    }, [formData, currentStep]);
     const handleBack = useCallback(() => {
         setCurrentStep((prev) => Math.max(prev - 1, 0));
     }, []);
@@ -656,7 +978,13 @@ export default function ViewParentPage() {
                 handleBack={handleBack}
                 countryCode={countryCode}
                 setCountryCode={setCountryCode}
-
+                sameAddressAsChild={sameAddressAsChild}
+                setSameAddressAsChild={setSameAddressAsChild}
+                sameEmergencyAsGuardian={sameEmergencyAsGuardian}
+                setSameEmergencyAsGuardian={setSameEmergencyAsGuardian}
+                setIsNotificationCard={setIsNotificationCard}
+                setNotificationMessage={setNotificationMessage}
+                setNotificationType={setNotificationType}
             />
         </SuperLayout>
     );

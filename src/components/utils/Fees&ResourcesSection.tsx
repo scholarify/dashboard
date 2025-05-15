@@ -9,6 +9,9 @@ import { motion } from "framer-motion";
 
 interface FeesAndResourcesSectionProps {
     formData: {
+        scholarshipPercentage: string | number | readonly string[] | undefined;
+        scholarshipAmount: string | number | readonly string[] | undefined;
+        applyScholarship: boolean | undefined;
         selectedFees: string[];
         selectedResources: string[];
         paymentMode: "full" | "installment";
@@ -20,6 +23,9 @@ interface FeesAndResourcesSectionProps {
     feeLoading: boolean;
     resourceList: SchoolResourceSchema[];
     resourceLoading: boolean;
+    applyScholarship: boolean;
+    scholarshipAmount: number;
+    
 }
 
 const FeesAndResourcesSection: React.FC<FeesAndResourcesSectionProps> = ({
@@ -37,9 +43,16 @@ const FeesAndResourcesSection: React.FC<FeesAndResourcesSectionProps> = ({
         formData.selectedResources.includes(res._id)
     );
 
-    const totalSelectedAmount =
+    const rawTotalAmount =
         selectedFeesDetails.reduce((sum, f) => sum + f.amount, 0) +
         selectedResourceDetails.reduce((sum, r) => sum + r.price, 0);
+
+    const scholarshipDiscount = formData.applyScholarship
+        ? ((Number(formData.scholarshipPercentage) || 0) / 100) * rawTotalAmount
+        : 0;
+
+    const totalSelectedAmount = rawTotalAmount - scholarshipDiscount;
+
 
     return (
         <div className="space-y-6">
@@ -86,6 +99,44 @@ const FeesAndResourcesSection: React.FC<FeesAndResourcesSectionProps> = ({
                         Pay in Installments
                     </label>
                 </div>
+            </div>
+            {/* Scholarship Section */}
+            <div className="mt-6 space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium">
+                    <input
+                        type="checkbox"
+                        name="applyScholarship"
+                        checked={formData.applyScholarship}
+                        onChange={handleChange}
+                        className="text-teal-500"
+                    />
+                    Apply Scholarship
+                </label>
+
+                {formData.applyScholarship && (
+                    <div className="mt-4">
+                        <label className="font-medium text-sm block mb-2">
+                            Scholarship (%) <span className="text-gray-500">(optional)</span>
+                        </label>
+                        <input
+                            type="number"
+                            name="scholarshipPercentage"
+                            min="0"
+                            max="100"
+                            value={formData.scholarshipPercentage}
+                            onChange={handleChange}
+                            placeholder="Enter percentage (e.g., 20)"
+                            className="w-full md:w-60 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-800 dark:text-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        />
+                    </div>
+                )}
+                {formData.applyScholarship && (
+                    <div className="mt-2 text-sm text-teal-700 font-medium">
+                        Scholarship Applied: {scholarshipDiscount.toLocaleString()} XAF ({formData.scholarshipPercentage}%)
+                    </div>
+                )}
+
+
             </div>
 
             {/* Total Summary */}

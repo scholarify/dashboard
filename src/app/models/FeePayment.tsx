@@ -11,7 +11,7 @@ export interface InstallmentSchema {
     student_id: string;
     school_id: string;
     class_id: string;
-    academic_id: string;
+    academic_year: string;
     selectedFees: string[];
     selectedResources: string[];
     paymentMode: "full" | "installment";
@@ -27,7 +27,7 @@ export interface InstallmentSchema {
     student_id: string;
     school_id: string;
     class_id: string;
-    academic_id: string;
+    academic_year: string;
     selectedFees: string[];
     selectedResources: string[];
     paymentMode: "full" | "installment";

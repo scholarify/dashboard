@@ -49,7 +49,7 @@ function ManageStudentsPage(): JSX.Element {
 
         setStudents(studentsData);
         setClasses(classesData);
-
+        console.log("classData:",classesData)
         const matchedSchool = schoolsData.find((s: SchoolSchema) => s._id === schoolId) || null;
         setSchool(matchedSchool);
 
@@ -64,6 +64,7 @@ function ManageStudentsPage(): JSX.Element {
         classesData.forEach((cls: ClassSchema) => {
           classMap[cls._id] = cls.name;
         });
+        
         setClassesMap(classMap);
       } catch (err) {
         console.error('Failed to fetch data', err);
@@ -74,6 +75,7 @@ function ManageStudentsPage(): JSX.Element {
 
     fetchData();
   }, [schoolId]);
+  
 
   const filteredStudents = selectedClass === 'all'
     ? students

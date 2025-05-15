@@ -42,7 +42,7 @@ export async function getFeePaymentById(id: string): Promise<FeePaymentSchema> {
 export async function createFeePayment(data: FeePaymentCreateSchema): Promise<FeePaymentSchema> {
   const token = getTokenFromCookie("idToken");
 
-  const response = await fetch(`${BASE_API_URL}/fee-payments/create-fee-payment`, {
+  const response = await fetch(`${BASE_API_URL}/fee-payment/create-fee-payment`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -63,7 +63,7 @@ export async function createFeePayment(data: FeePaymentCreateSchema): Promise<Fe
 export async function updateFeePayment(id: string, data: FeePaymentUpdateSchema): Promise<FeePaymentSchema> {
   const token = getTokenFromCookie("idToken");
 
-  const response = await fetch(`${BASE_API_URL}/fee-payments/update-fee-payment/${id}`, {
+  const response = await fetch(`${BASE_API_URL}/fee-payment/update-fee-payment/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -84,7 +84,7 @@ export async function updateFeePayment(id: string, data: FeePaymentUpdateSchema)
 export async function deleteFeePayment(id: string): Promise<{ message: string }> {
   const token = getTokenFromCookie("idToken");
 
-  const response = await fetch(`${BASE_API_URL}/fee-payments/delete-fee-payment/${id}`, {
+  const response = await fetch(`${BASE_API_URL}/fee-payment/delete-fee-payment/${id}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -104,7 +104,7 @@ export async function deleteFeePayment(id: string): Promise<{ message: string }>
 export async function getFeePaymentsBySchoolId(schoolId: string): Promise<FeePaymentSchema[]> {
   const token = getTokenFromCookie("idToken");
 
-  const response = await fetch(`${BASE_API_URL}/fee-payments/get-fee-payments-by-school/${schoolId}`, {
+  const response = await fetch(`${BASE_API_URL}/fee-payment/get-fee-payments-by-school/${schoolId}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -121,7 +121,7 @@ export async function getFeePaymentsBySchoolId(schoolId: string): Promise<FeePay
 export async function getFeePaymentsByStudentId(studentId: string): Promise<FeePaymentSchema[]> {
   const token = getTokenFromCookie("idToken");
 
-  const response = await fetch(`${BASE_API_URL}/fee-payments/get-fee-payments-by-student/${studentId}`, {
+  const response = await fetch(`${BASE_API_URL}/fee-payment/get-fee-payments-by-student/${studentId}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

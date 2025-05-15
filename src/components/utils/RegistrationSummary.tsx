@@ -26,6 +26,15 @@ const RegistrationSummary: React.FC<RegistrationSummaryProps> = ({
         selectedFeesDetails.reduce((sum, f) => sum + f.amount, 0) +
         selectedResourceDetails.reduce((sum, r) => sum + r.price, 0);
 
+    const scholarshipPercentage = Number(formData.scholarshipPercentage) || 0;
+    const applyScholarship = formData.applyScholarship;
+
+    const scholarshipDiscount = applyScholarship
+        ? (scholarshipPercentage / 100) * totalAmount
+        : 0;
+
+    const finalAmount = totalAmount - scholarshipDiscount;
+
     return (
         <div className="space-y-6 text-sm text-gray-800 dark:text-gray-200">
             <h3 className="text-lg font-semibold">Review Submission Summary</h3>
@@ -75,8 +84,29 @@ const RegistrationSummary: React.FC<RegistrationSummaryProps> = ({
                         <li key={res._id}>{res.name}: {res.price.toLocaleString()} XAF</li>
                     ))}
                 </ul>
-                <p className="font-semibold mt-2">Total Amount: {totalAmount.toLocaleString()} XAF</p>
-                <p>Payment Mode: <strong>{formData.paymentMode}</strong></p>
+
+                <p className="mt-2">
+                    <strong>Total:</strong> {totalAmount.toLocaleString()} XAF
+                </p>
+
+                {applyScholarship && (
+                    <>
+                        <p>
+                            <strong>Scholarship ({scholarshipPercentage}%):</strong> -{scholarshipDiscount.toLocaleString()} XAF
+                        </p>
+                        <p className="font-semibold">
+                            Total Payable: {finalAmount.toLocaleString()} XAF
+                        </p>
+                    </>
+
+                )}
+
+
+
+                <p className="mt-2">
+                    Payment Mode: <strong>{formData.paymentMode}</strong>
+                </p>
+
                 {formData.paymentMode === "installment" && (
                     <div className="mt-2">
                         <p><strong>Installments:</strong> {formData.installments}</p>
@@ -85,13 +115,12 @@ const RegistrationSummary: React.FC<RegistrationSummaryProps> = ({
                         <ul className="list-disc ml-6">
                             {Array.from({ length: formData.installments }, (_, idx) => (
                                 <li key={idx}>
-                                    Installment {idx + 1}: {(totalAmount / formData.installments).toLocaleString()} XAF
+                                    Installment {idx + 1}: {(finalAmount / formData.installments).toLocaleString()} XAF
                                 </li>
                             ))}
                         </ul>
                     </div>
                 )}
-
             </div>
 
             <div className="mt-4">

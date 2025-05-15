@@ -58,7 +58,7 @@ export async function getStudentById(studentId: string): Promise<StudentSchema> 
 export async function createStudent(studentData: StudentCreateSchema): Promise<StudentSchema> {
   const token = getTokenFromCookie("idToken");
 
-  const response = await fetch(`${BASE_API_URL}/student/register-student`, {
+  const response = await fetch(`${BASE_API_URL}/student/create-student`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
