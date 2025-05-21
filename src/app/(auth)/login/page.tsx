@@ -56,7 +56,12 @@ export default function Login() {
                 router.push('/school-admin/dashboard');
             }
         } catch (error) {
-            setErrorMessage("The email or password you entered doesn't match our records. Please double-check and try again.");
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "The email or password you entered doesn't match our records. Please double-check and try again.";
+
+            setErrorMessage(errorMessage);
             setHasError(true);
         } finally {
             setIsLoading(false);

@@ -25,7 +25,7 @@ export default function ViewParentPage() {
     const [loading, setLoading] = useState(true);
     const [isNotificationCard, setIsNotificationCard] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState("");
-    const [notificationType, setNotificationType] = useState("success");
+    const [notificationType, setNotificationType] = useState<"success" | "error" | "info" | "warning">("success");
     const searchParams = useSearchParams();
     const student_id = searchParams.get("studentId");
     const schoolId = searchParams.get("schoolId");
@@ -114,7 +114,7 @@ export default function ViewParentPage() {
                             <InfoBox label="Student ID" value={student.student_id || "N/A"} />
                             <InfoBox label="Name" value={student.name || "N/A"} />
                             <InfoBox label="Gender" value={student.gender || "N/A"} />
-                            <InfoBox label="Date Of Birth" value={student.date_of_birth || "N/A"} />
+                            <InfoBox label="Date Of Birth" value={student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString() : "N/A"} />
                             <InfoBox label="School" value={getSchoolNames([schoolId as string])} />
                             <InfoBox
                                 label="Parent(s)"
