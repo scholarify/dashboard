@@ -10,7 +10,7 @@ export interface InstallmentSchema {
     _id: string;
     student_id: string;
     school_id: string;
-    class_id: string;
+    class_level: string;
     academic_year: string;
     selectedFees: string[];
     selectedResources: string[];
@@ -26,7 +26,7 @@ export interface InstallmentSchema {
   export interface FeePaymentCreateSchema extends Record<string, unknown> {
     student_id: string;
     school_id: string;
-    class_id: string;
+    class_level: string;
     academic_year: string;
     selectedFees: string[];
     selectedResources: string[];

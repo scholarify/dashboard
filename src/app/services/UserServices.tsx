@@ -389,3 +389,85 @@ export async function reset_password(newPassword: string, email: string, code: s
         throw new Error("Failed to reset password");
     }
 }
+
+export async function handleUserSearch(query: string): Promise<UserSchema[]> {
+    try {
+        const token = getTokenFromCookie("idToken");
+        const response = await fetch(`${BASE_API_URL}/user/search-users?query=${encodeURIComponent(query)}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            console.error("Error searching users:", response.statusText);
+            throw new Error("Failed to search users");
+        }
+
+        const results = await response.json();
+
+        const users = results.map((user: any) => {
+            return {
+                _id: user._id,
+                user_id: user.user_id,
+                firebaseUid: user.firebaseUid,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                role: user.role,
+                avatar: user.avatar,
+                address: user.address,
+                school_ids: user.school_ids,
+                isVerified: user.isVerified,
+                verificationCode: user.verificationCode,
+                verificationCodeExpires: user.verificationCodeExpires,
+                lastLogin: user.lastLogin,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+            } as UserSchema;
+        });
+
+        return users;
+    } catch (error) {
+        console.error("Error searching users:", error);
+        throw new Error("Failed to search users");
+    }
+}
+
+export async function registerParent(parentData: any) {
+    try {
+        const response = await fetch(`${BASE_API_URL}/user/register-parent`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${getTokenFromCookie("idToken")}`, // Assuming Firebase or similar token auth
+            },
+            body: JSON.stringify(parentData),
+        });
+
+        if (!response.ok) {
+            let errorMessage = "Failed to register parent";
+
+            try {
+                const errorBody = await response.json();
+                errorMessage = errorBody?.message || errorMessage;
+            } catch (parseError) {
+                console.warn("Could not parse error response:", parseError);
+            }
+
+            console.error("Error registering parent:", errorMessage);
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        return data; // This includes user object and generatedPassword (if new)
+        
+    } catch (error) {
+        console.error("Error in registerParent service:", error);
+        throw new Error(error instanceof Error ? error.message : "Failed to register parent");
+    }
+}
+
+

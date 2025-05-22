@@ -3,7 +3,8 @@ export interface StudentSchema extends Record<string, unknown> {
   student_id: string;
   guardian_id?: string[];
   school_id: string;
-  class_id: string;
+  class_id?: string;
+  class_level?:string;
   first_name: string;
   last_name: string;
   middle_name?: string;
@@ -51,7 +52,8 @@ export interface StudentCreateSchema extends Record<string, unknown> {
   student_id?: string;
   guardian_id?: string[];
   school_id: string;
-  class_id: string;
+  class_id?: string;
+  class_level?:string;
   first_name: string;
   last_name: string;
   middle_name?: string;
@@ -93,6 +95,7 @@ export interface StudentUpdateSchema extends Record<string, unknown> {
   guardian_id?: string[];
   school_id?: string;
   class_id?: string;
+  class_level?:string;
   first_name?: string;
   last_name?: string;
   middle_name?: string;

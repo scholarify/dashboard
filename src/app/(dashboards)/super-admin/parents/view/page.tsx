@@ -25,7 +25,7 @@ export default function ViewParentPage() {
     const [loadingData, setLoadingData] = useState(false);
     const [isNotificationCard, setIsNotificationCard] = useState(false);
     const [notificationMessage, setNotificationMessage] = useState("");
-    const [notificationType, setNotificationType] = useState("success");
+    const [notificationType, setNotificationType] = useState<"success" | "error" | "info" | "warning">("success");
     const searchParams = useSearchParams();
     const invitationId = searchParams.get("id");
     const [isSubmitting, setIsSubmitting] = useState(false);

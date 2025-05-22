@@ -38,7 +38,7 @@ export default function Page() {
         const [loadingData, setLoadingData] = useState(false);
         const [isNotificationCard, setIsNotificationCard] = useState(false);
         const [notificationMessage, setNotificationMessage] = useState("");
-        const [notificationType, setNotificationType] = useState("success");
+        const [notificationType, setNotificationType] = useState<"success" | "error" | "info" | "warning">("success");
         const [isSubmitting, setIsSubmitting] = useState(false);
         const [submitStatus, setSubmitStatus] = useState<"success" | "failure" | null>(null);
         const [invitationToDelete, setinvitationToDelete] = useState<InvitationSchema | null>(null);
