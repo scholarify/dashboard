@@ -99,10 +99,16 @@ const GuardianDetailsForm: React.FC<GuardianDetailsFormProps> = ({
 
     if (option?.data) {
       const g = option.data;
+      let phone = g.phone || '';
+      if (phone.startsWith('+')) {
+        const countryDigits = countryCode.replace('+', '');
+        phone = phone.replace(new RegExp(`^\\+?${countryDigits}`), '');
+      }
+      phone = phone.replace(/\D/g, '');
 
       handleChange({ target: { name: "guardian_name", value: g.name || "" } } as React.ChangeEvent<HTMLInputElement>);
       handleChange({ target: { name: "guardian_email", value: g.email || "" } } as React.ChangeEvent<HTMLInputElement>);
-      handleChange({ target: { name: "guardian_phone", value: g.phone || "" } } as React.ChangeEvent<HTMLInputElement>);
+      handleChange({ target: { name: "guardian_phone", value: phone || "" } } as React.ChangeEvent<HTMLInputElement>);
       handleChange({ target: { name: "guardian_address", value: g.address || "" } } as React.ChangeEvent<HTMLInputElement>);
     } else {
       // Clear fields on deselect

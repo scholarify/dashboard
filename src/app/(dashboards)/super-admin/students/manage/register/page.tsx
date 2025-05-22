@@ -379,7 +379,7 @@ function RegistrationContent({
                         <CustomPhoneInput
                             label="Emergency Contact Phone"
                             id="emergency_contact_phone"
-                            name="(Required)"
+                            name="emergency_contact_phone"
                             value={formData.emergency_contact_phone || ''}
                             onChange={handleChange}
                             countryCode={formData.emergency_contact_country_code || ""}
@@ -463,10 +463,12 @@ function RegistrationContent({
         const discount = (grossTotal * scholarshipPercentage) / 100;
         return grossTotal - discount;
     }
-    function formatPhoneNumberToE164(countryCode: string, localNumber: string): string {
-        const cleaned = localNumber.replace(/\D/g, ''); // Remove non-digits
-        return `${countryCode}${cleaned}`;
-    }
+function formatPhoneNumberToE164(countryCode: string, localNumber: string): string {
+    const cleanedCountryCode = countryCode.replace(/\D/g, '');
+    const cleanedLocalNumber = localNumber.replace(/\D/g, '');
+    return `+${cleanedCountryCode}${cleanedLocalNumber}`;
+}
+    
 
     const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -574,46 +576,23 @@ function RegistrationContent({
                         }))
                         : [];
 
+                const feePaymentData = {
+                    student_id: data._id,
+                    school_id: searchParams.get("schoolId") || "",
+                    class_level: formData.class_level || "",
+                    academic_year: acadamicYear,
 
-                try {
+                    selectedFees: formData.selectedFees || [],
+                    selectedResources: formData.selectedResources || [],
 
-                    const feePaymentData = {
-                        student_id: data._id,
-                        school_id: searchParams.get("schoolId") || "",
-                        class_level: formData.class_level || "",
-                        academic_year: acadamicYear,
+                    paymentMode: formData.paymentMode || "full",
+                    totalAmount: totalFee,
 
-                        selectedFees: formData.selectedFees || [],
-                        selectedResources: formData.selectedResources || [],
+                    installments,
+                };
+                const paymentData = await createFeePayment(feePaymentData);
 
-                        paymentMode: formData.paymentMode || "full",
-                        totalAmount: totalFee,
-
-                        installments,
-                    };
-                    const paymentData = await createFeePayment(feePaymentData);
-
-                    if (paymentData) {
-                        // setSubmitStatus("success");
-                        // setSubmitMessage("Registration was successful.");
-                        setNotificationType("success");
-                        setIsNotificationCard(true);
-                    } else {
-                        // Fee creation failed but student already created
-                        setSubmitStatus("failure");
-                        setSubmitMessage("Student was registered, Contact support.");
-                        setNotificationType("error");
-                        setIsNotificationCard(true);
-                    }
-                } catch (error) {
-                    console.error("Fee payment creation error:", error);
-
-                    setSubmitStatus("failure");
-                    setSubmitMessage("Student was registered, but fee setup failed due to an unexpected error Contact Support.");
-                    setNotificationType("error");
-                    setIsNotificationCard(true);
-                }
-                try {
+                if (paymentData) {
                     const parentPayload = {
                         name: formData.guardian_name,
                         phone: formData.guardian_country_code && formData.guardian_phone
@@ -624,38 +603,27 @@ function RegistrationContent({
                         school_ids: [searchParams.get("schoolId") || ""],
                         student_ids: [data._id], // link newly created student
                     };
-
-                    const parentResult = await registerParent(parentPayload);
-
-                    if (parentResult) {
+                    const parentData = await registerParent(parentPayload);
+                    if(!parentData) {
+                        setSubmitStatus("failure");
+                        setNotificationMessage("Registration failed. Please try again.");
+                        setSubmitMessage("Registration failed. Please try again.");
+                        setNotificationType("error");
+                        setIsNotificationCard(true);
+                        setIsSubmitting(false);
+                    }
                         setSubmitStatus("success");
-                        setSubmitMessage("Registration was successful.");
+                        setNotificationMessage("Registration successful!");
+                        setSubmitMessage("Registration successful!");
                         setNotificationType("success");
                         setIsNotificationCard(true);
-                        console.log("Parent registered or updated successfully:", parentResult);
-                    } else {
-                        setNotificationMessage("Parent may not have been properly linked.");
-                        setNotificationType("warning");
-
-                    }
-                } catch (error) {
-                    console.error("Parent registration error:", error);
-                    const errorMessage =
-                        error instanceof Error
-                            ? error.message
-                            : "An unknown error occurred while adding parent in database.";
-
-                    setSubmitStatus("failure");
-                    setNotificationMessage(errorMessage);
-                    setSubmitMessage(errorMessage)
-                    setNotificationType("error");
-                    setIsNotificationCard(true);
+                        setIsSubmitting(false);
                 }
 
             }
 
         } catch (error) {
-            console.error("Error creating student:", error);
+            console.error("Error During Registration:", error);
 
             const errorMessage =
                 error instanceof Error
@@ -667,7 +635,6 @@ function RegistrationContent({
             setSubmitMessage(errorMessage)
             setNotificationType("error");
             setIsNotificationCard(true);
-        } finally {
             setIsSubmitting(false);
         }
     }, [formData]);
